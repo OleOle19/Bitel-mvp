@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guion de demostración (Google Meet)</title>
+    <style>
+      :root{
+        --bg:#ffffff;
+        --text:#111827;
+        --muted:#374151;
+        --border:#e5e7eb;
+        --header:#0f172a;
+        --headerText:#ffffff;
+        --codeBg:#f3f4f6;
+        --calloutBg:#eff6ff;
+        --calloutBorder:#93c5fd;
+        --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+      *{box-sizing:border-box}
+      body{margin:0;font-family:var(--sans);color:var(--text);background:var(--bg);line-height:1.55}
+      .wrap{max-width:920px;margin:0 auto;padding:34px 18px 60px}
+      header{
+        border:1px solid var(--border);
+        border-radius:14px;
+        padding:18px 18px 14px;
+        background:linear-gradient(180deg, #0f172a, #111827);
+        color:var(--headerText);
+      }
+      header h1{margin:0 0 6px;font-size:26px;letter-spacing:-.01em}
+      header p{margin:0;color:rgba(255,255,255,.85);font-size:13px}
+      header .meta{margin-top:10px;color:rgba(255,255,255,.72);font-size:12px}
+      main{margin-top:18px}
+      h1,h2,h3,h4,h5,h6{color:#0f172a;letter-spacing:-.01em}
+      h2{margin:22px 0 10px;padding-top:6px;border-top:1px solid var(--border)}
+      h3{margin:16px 0 8px}
+      p{margin:10px 0;color:var(--muted)}
+      a{color:#2563eb;text-decoration:none}
+      a:hover{text-decoration:underline}
+      code{
+        font-family:var(--mono);
+        font-size:12px;
+        background:var(--codeBg);
+        border:1px solid var(--border);
+        padding:1px 6px;
+        border-radius:10px;
+      }
+      pre{
+        background:var(--codeBg);
+        border:1px solid var(--border);
+        border-radius:12px;
+        padding:12px;
+        overflow:auto;
+      }
+      pre code{border:none;padding:0;background:transparent}
+      table{
+        width:100%;
+        border-collapse:separate;
+        border-spacing:0;
+        border:1px solid var(--border);
+        border-radius:12px;
+        overflow:hidden;
+        margin:12px 0;
+      }
+      th,td{
+        padding:9px 10px;
+        border-bottom:1px solid var(--border);
+        vertical-align:top;
+      }
+      th{
+        background:#f9fafb;
+        font-size:12px;
+        color:#111827;
+        text-transform:none;
+      }
+      tr:last-child td{border-bottom:none}
+      ul,ol{margin:10px 0;padding-left:18px;color:var(--muted)}
+      li{margin:6px 0}
+      blockquote.callout{
+        margin:12px 0;
+        padding:12px 14px;
+        border-radius:12px;
+        background:var(--calloutBg);
+        border:1px solid var(--calloutBorder);
+      }
+      blockquote.callout p{margin:6px 0;color:#0f172a}
+      ul.checklist{list-style:none;padding-left:0;margin-left:0}
+      ul.checklist li.check-item{
+        display:flex;
+        gap:10px;
+        align-items:flex-start;
+        padding:7px 10px;
+        border:1px solid var(--border);
+        border-radius:10px;
+        margin:8px 0;
+        background:#ffffff;
+      }
+      .box{
+        width:14px;height:14px;border:1px solid #9ca3af;border-radius:4px;margin-top:3px;flex:0 0 14px;
+      }
+      .box.checked{background:#111827}
+      @page{size:A4;margin:14mm}
+      @media print{a{color:#111827;text-decoration:none}}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Guion de demostración (Google Meet)</h1>
+        <p>Exportado desde docs/DEMO_MEET.md (tablas y cuadros estilizados).</p>
+        <div class="meta">Generado: 2026-03-14 02:13</div>
+      </header>
+      <main>
+<h1>Guion de demostración (Google Meet)</h1>
+<p>Este documento está pensado para mostrar el sistema de forma ordenada en una demo por Meet, con tablas y diagramas.</p>
+<blockquote class="callout"><p>Nota: este archivo incluye diagramas en <strong>Mermaid</strong>. Si tu visor no los renderiza, igual se entiende por las tablas y el paso a paso.</p></blockquote>
+<h2>0) Agenda rápida (recomendada)</h2>
+<table><thead><tr><th style="text-align:left">Bloque</th><th style="text-align:right">Duración</th><th style="text-align:left">Objetivo</th></tr></thead><tbody><tr><td style="text-align:left">Introducción + login</td><td style="text-align:right">1 min</td><td style="text-align:left">Contexto del MVP y multi-local</td></tr><tr><td style="text-align:left">Operación diaria (SUPERVISOR)</td><td style="text-align:right">4–6 min</td><td style="text-align:left">Venta + caja + comprobantes</td></tr><tr><td style="text-align:left">Inventario (SUPERVISOR)</td><td style="text-align:right">4–6 min</td><td style="text-align:left">Stock, importación Excel, kardex</td></tr><tr><td style="text-align:left">Transferencias (SUPERVISOR)</td><td style="text-align:right">2–4 min</td><td style="text-align:left">Envío por lote + PDF + estados</td></tr><tr><td style="text-align:left">Reportes (SUPERVISOR)</td><td style="text-align:right">3–5 min</td><td style="text-align:left">KPIs, ranking, cierres, stock bajo</td></tr><tr><td style="text-align:left">Auditoría (AUDITOR)</td><td style="text-align:right">3–5 min</td><td style="text-align:left">Control sin riesgo (solo lectura)</td></tr><tr><td style="text-align:left">Cierre (ADMIN)</td><td style="text-align:right">1 min</td><td style="text-align:left">Control total (backup / mantenimiento)</td></tr></tbody></table>
+<h2>1) Accesos para probar (seed)</h2>
+<p>Estos usuarios existen cuando se ejecutó el seed de Prisma (<code>npm --prefix server run seed</code>) al menos una vez.</p>
+<table><thead><tr><th style="text-align:left">Rol</th><th style="text-align:left">Descripción</th><th style="text-align:left">Correo</th><th style="text-align:left">Contraseña</th><th style="text-align:left">Local</th></tr></thead><tbody><tr><td style="text-align:left"><code>SUPERVISOR</code></td><td style="text-align:left">Encargado de un local</td><td style="text-align:left"><code>supervisor.pn@bitel.local</code></td><td style="text-align:left"><code>demo123</code></td><td style="text-align:left">Pueblo Nuevo (<code>LALDA67</code>)</td></tr><tr><td style="text-align:left"><code>AUDITOR</code></td><td style="text-align:left">Solo lectura (ve todo, no escribe)</td><td style="text-align:left"><code>auditor@bitel.local</code></td><td style="text-align:left"><code>demo123</code></td><td style="text-align:left">N/A</td></tr><tr><td style="text-align:left"><code>VENDEDOR</code></td><td style="text-align:left">Vende en su local (opcional)</td><td style="text-align:left"><code>vendedor.pn@bitel.local</code></td><td style="text-align:left"><code>demo123</code></td><td style="text-align:left">Pueblo Nuevo (<code>LALDA67</code>)</td></tr></tbody></table>
+<p>Si alguno no entra, ejecuta el seed: <code>npm --prefix server run seed</code>.</p>
+<h2>2) Jerarquías (como se explica en la demo)</h2>
+<ol><li><strong>Administrador principal (&lt;code&gt;ADMIN&lt;/code&gt;)</strong></li></ol>
+<ul><li>Control total del sistema (multi-local).</li></ul>
+<ol><li><strong>Encargado por local (&lt;code&gt;SUPERVISOR&lt;/code&gt;)</strong></li></ol>
+<ul><li>Opera en su local (caja, inventario, transferencias, ventas).</li><li>No ve consolidado &quot;por local&quot; global (eso queda para admin/solo lectura).</li></ul>
+<ol><li><strong>Solo lectura (&lt;code&gt;AUDITOR&lt;/code&gt;)</strong></li></ol>
+<ul><li>Acceso visual a módulos y reportes, sin poder registrar/modificar información.</li></ul>
+<h2>3) Matriz de permisos (resumen)</h2>
+<p>Leyenda: ✅ permitido · ⚠️ permitido pero acotado por local · ❌ no permitido.</p>
+<table><thead><tr><th style="text-align:left">Acción / Módulo</th><th style="text-align:center"><code>ADMIN</code></th><th style="text-align:center"><code>SUPERVISOR</code></th><th style="text-align:center"><code>AUDITOR</code></th><th style="text-align:center"><code>VENDEDOR</code></th></tr></thead><tbody><tr><td style="text-align:left">Ver resumen/dashboard</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td></tr><tr><td style="text-align:left">Registrar venta</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">❌</td><td style="text-align:center">⚠️</td></tr><tr><td style="text-align:left">Anular venta</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">❌</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Ver caja (listar)</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">✅</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Abrir/cerrar caja</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">❌</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Movimientos de caja</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">❌</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Descargar comprobante de venta (PDF)</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">❌</td><td style="text-align:center">⚠️</td></tr><tr><td style="text-align:left">Descargar cierre de caja (PDF)</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">❌</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Ver inventario</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td></tr><tr><td style="text-align:left">Crear/editar/incrementar stock</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">❌</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Importar inventario (Excel)</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">❌</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Ver kardex/movimientos</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">✅</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Transferencias (ver)</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">✅</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Transferencias (enviar/recibir/observar)</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">❌</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Reportes (KPIs, ranking, cierres, stock)</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td></tr><tr><td style="text-align:left">Reporte global &quot;ventas por local&quot;</td><td style="text-align:center">✅</td><td style="text-align:center">❌</td><td style="text-align:center">✅</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Exportar reportes (Excel/PDF)</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td></tr><tr><td style="text-align:left">Auditoría (ver logs)</td><td style="text-align:center">✅</td><td style="text-align:center">❌</td><td style="text-align:center">✅</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Backup (<code>/reports/backup.json</code>)</td><td style="text-align:center">✅</td><td style="text-align:center">❌</td><td style="text-align:center">❌</td><td style="text-align:center">❌</td></tr><tr><td style="text-align:left">Reset demo / mantenimiento</td><td style="text-align:center">✅</td><td style="text-align:center">❌</td><td style="text-align:center">❌</td><td style="text-align:center">❌</td></tr></tbody></table>
+<h2>4) Reglas clave (para decir en 15–30s)</h2>
+<ul><li>Multi-local: algunos roles quedan &quot;fijos&quot; a un local (<code>localId</code>) y el sistema restringe automáticamente.</li><li>Auditoría: cada operación importante deja registro (acción, entidad, usuario, local, fecha).</li><li>Reportes/exportables: Excel/PDF según permisos.</li><li>Comprobantes: ventas y cierres de caja generan PDF descargable.</li></ul>
+<h2>5) Mapa del sistema (qué hace cada módulo)</h2>
+<table><thead><tr><th style="text-align:left">Módulo</th><th style="text-align:left">Qué resuelve</th><th style="text-align:left">Qué muestras</th></tr></thead><tbody><tr><td style="text-align:left">Resumen</td><td style="text-align:left">Visión rápida del periodo</td><td style="text-align:left">Totales + alertas (stock, caja, transferencias)</td></tr><tr><td style="text-align:left">Operación diaria</td><td style="text-align:left">Ventas + caja por turno</td><td style="text-align:left">Registrar venta, caja, comprobantes</td></tr><tr><td style="text-align:left">Inventario</td><td style="text-align:left">Stock por local + cambios</td><td style="text-align:left">Lista, edición, importación Excel</td></tr><tr><td style="text-align:left">Kardex</td><td style="text-align:left">Trazabilidad de inventario</td><td style="text-align:left">Movimientos y filtros por fecha/item</td></tr><tr><td style="text-align:left">Transferencias</td><td style="text-align:left">Traslado entre locales</td><td style="text-align:left">Envío por lote, estados, PDF</td></tr><tr><td style="text-align:left">Reportes</td><td style="text-align:left">Control/indicadores</td><td style="text-align:left">KPIs, top productos, cierres, stock/movs</td></tr><tr><td style="text-align:left">Auditoría</td><td style="text-align:left">Control y trazabilidad</td><td style="text-align:left">Logs filtrables + historial</td></tr><tr><td style="text-align:left">Admin</td><td style="text-align:left">Control total</td><td style="text-align:left">Backup / mantenimiento (si aplica)</td></tr></tbody></table>
+<h2>6) Diagramas (para explicar el flujo)</h2>
+<h3>Flujo: Venta + caja + auditoría (operación diaria)</h3>
+<pre><code class="language-mermaid">flowchart TD
+  A[Usuario (SUPERVISOR/VENDEDOR)] --&gt; B[Operación diaria]
+  B --&gt; C[Registrar venta]
+  C --&gt; D[Actualiza stock]
+  C --&gt; E[Asigna comprobante]
+  C --&gt; F[Log: sale.create]
+  B --&gt; G[Caja por turno]
+  G --&gt; H[Abrir caja]
+  H --&gt; I[Log: cash.open]
+  G --&gt; J[Movimientos de caja]
+  J --&gt; K[Log: cash.tx.create]
+  G --&gt; L[Cerrar caja]
+  L --&gt; M[Log: cash.close]
+  B --&gt; N[Descargar PDFs]</code></pre>
+<h3>Flujo: Transferencias entre locales (lote)</h3>
+<pre><code class="language-mermaid">flowchart LR
+  A[Encargado (SUPERVISOR)] --&gt; B[Generar envío por lote]
+  B --&gt; C[Se crea batchCode]
+  C --&gt; D[Imprimir PDF del envío]
+  C --&gt; E[Recibir envío (destino)]
+  C --&gt; F[Observar envío (incidencia)]
+  E --&gt; G[Estado: RECEIVED]
+  F --&gt; H[Estado: OBSERVED]</code></pre>
+<h3>Flujo: Auditor (solo lectura)</h3>
+<pre><code class="language-mermaid">flowchart TD
+  A[AUDITOR] --&gt; B[Navega módulos]
+  B --&gt; C[Reportes / Auditoría]
+  B --&gt; D[Operación diaria / Inventario]
+  D --&gt; E[Ve tablas]
+  E --&gt; F[Acciones deshabilitadas (read-only)]</code></pre>
+<h2>7) Demo paso a paso (en orden)</h2>
+<h3>Paso 0: Preparación (30–60s)</h3>
+<ul><li>Mostrar login.</li><li>Explicar el alcance: ventas, inventario, caja, reportes, auditoría.</li></ul>
+<h3>Paso 1: Operación diaria (SUPERVISOR) (4–6 min)</h3>
+<p>Objetivo: demostrar operación real por local y que el sistema restringe automáticamente.</p>
+<p>Checklist:</p>
+<ul class="checklist"><li class="check-item"><span class="box"></span><span>Entrar con <code>supervisor.pn@bitel.local</code>.</span></li><li class="check-item"><span class="box"></span><span>Mostrar chip de rol + local asignado.</span></li><li class="check-item"><span class="box"></span><span>Registrar 1 venta.</span></li><li class="check-item"><span class="box"></span><span>Mostrar &quot;Ventas recientes&quot;.</span></li><li class="check-item"><span class="box"></span><span>Abrir caja (si no hay abierta).</span></li><li class="check-item"><span class="box"></span><span>Registrar 1 movimiento (gasto o depósito).</span></li><li class="check-item"><span class="box"></span><span>Cerrar caja.</span></li><li class="check-item"><span class="box"></span><span>Descargar 1 comprobante (PDF) de venta.</span></li></ul>
+<h3>Paso 2: Inventario + Kardex (SUPERVISOR) (4–6 min)</h3>
+<p>Checklist:</p>
+<ul class="checklist"><li class="check-item"><span class="box"></span><span>Filtrar inventario por local.</span></li><li class="check-item"><span class="box"></span><span>Editar 1 producto (precio o stock).</span></li><li class="check-item"><span class="box"></span><span>Descargar plantilla Excel (explicación rápida).</span></li><li class="check-item"><span class="box"></span><span>Mostrar &quot;Reemplazar stock&quot; vs &quot;Sumar al stock&quot;.</span></li><li class="check-item"><span class="box"></span><span>Filtrar movimientos (kardex) por fecha o item.</span></li><li class="check-item"><span class="box"></span><span>Registrar 1 ajuste y mostrarlo en la tabla.</span></li></ul>
+<h3>Paso 3: Transferencias (SUPERVISOR) (2–4 min)</h3>
+<p>Checklist:</p>
+<ul class="checklist"><li class="check-item"><span class="box"></span><span>Generar envío por lote (origen/destino + 1–2 items).</span></li><li class="check-item"><span class="box"></span><span>Copiar el <code>batchCode</code>.</span></li><li class="check-item"><span class="box"></span><span>Imprimir PDF del envío.</span></li><li class="check-item"><span class="box"></span><span>(Opcional) Recibir u observar para mostrar cambio de estado.</span></li></ul>
+<h3>Paso 4: Reportes (SUPERVISOR) (3–5 min)</h3>
+<p>Checklist:</p>
+<ul class="checklist"><li class="check-item"><span class="box"></span><span>Filtros (por local) + refrescar.</span></li><li class="check-item"><span class="box"></span><span>KPIs (ventas, total, ticket promedio, margen).</span></li><li class="check-item"><span class="box"></span><span>Top productos / por categoría.</span></li><li class="check-item"><span class="box"></span><span>Cierres de caja (resumen).</span></li><li class="check-item"><span class="box"></span><span>Stock bajo y movimientos (y exportaciones si aplica).</span></li></ul>
+<h3>Paso 5: Auditoría (AUDITOR / Solo lectura) (3–5 min)</h3>
+<p>Objetivo: demostrar un rol &quot;observador&quot; sin riesgo operativo.</p>
+<p>Checklist:</p>
+<ul class="checklist"><li class="check-item"><span class="box"></span><span>Salir y entrar con <code>auditor@bitel.local</code>.</span></li><li class="check-item"><span class="box"></span><span>Mostrar que los formularios/botones de escritura están deshabilitados.</span></li><li class="check-item"><span class="box"></span><span>Abrir Reportes → Auditoría.</span></li><li class="check-item"><span class="box"></span><span>Filtrar por acción o entidad y mostrar resultados.</span></li><li class="check-item"><span class="box"></span><span>Mostrar &quot;Historial de actividades&quot;.</span></li></ul>
+<h3>Paso 6 (opcional): Admin (1 min)</h3>
+<ul><li>Mencionar que admin puede descargar backup (<code>/reports/backup.json</code>) y ejecutar mantenimiento (si lo vas a usar).</li></ul>
+<h2>8) Mini &quot;gráficos&quot; (para acompañar la explicación)</h2>
+<h3>Ruta de la demo (vista tipo barra)</h3>
+<pre><code class="">Login            [##]
+Operación diaria [######]
+Inventario       [######]
+Transferencias   [####]
+Reportes         [#####]
+Auditoría        [#####]
+Cierre           [##]</code></pre>
+<h3>Qué mostrar vs qué evitar (para que fluya)</h3>
+<table><thead><tr><th style="text-align:left">Haz</th><th style="text-align:left">Evita</th></tr></thead><tbody><tr><td style="text-align:left">Usar 1 local (Pueblo Nuevo) para todo el flujo</td><td style="text-align:left">Saltar de local en local (confunde)</td></tr><tr><td style="text-align:left">Mostrar 1 venta completa + su comprobante</td><td style="text-align:left">Registrar muchas ventas en vivo</td></tr><tr><td style="text-align:left">1 apertura y 1 cierre de caja</td><td style="text-align:left">Repetir cierres muchas veces</td></tr><tr><td style="text-align:left">1 importación Excel (explicar, no masiva)</td><td style="text-align:left">Importaciones grandes en vivo</td></tr><tr><td style="text-align:left">1 transferencia por lote + PDF</td><td style="text-align:left">Transferencias enormes (demora)</td></tr><tr><td style="text-align:left">1 filtro de auditoría (acción/entidad/local)</td><td style="text-align:left">Abrir auditoría sin filtrar (mucha data)</td></tr></tbody></table>
+<h2>9) Frases cortas (para cerrar la demo)</h2>
+<ul><li>&quot;El sistema es multi-local: cada usuario puede quedar asignado a un local y se restringe automáticamente.&quot;</li><li>&quot;Supervisor opera el día a día: ventas, caja, inventario y transferencias.&quot;</li><li>&quot;Auditor es &#39;solo lectura&#39;: ve todo para control, sin posibilidad de modificar.&quot;</li><li>&quot;Cada acción relevante deja auditoría para trazabilidad y reportes.&quot;</li></ul>
+      </main>
+    </div>
+  </body>
+</html>

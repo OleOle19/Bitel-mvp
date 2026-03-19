@@ -1,0 +1,255 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  AUDITOR
+  VENDEDOR
+  ALMACEN
+}
+
+enum MovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum CashStatus {
+  OPEN
+  CLOSED
+}
+
+enum SaleStatus {
+  ACTIVE
+  CANCELED
+}
+
+enum SaleType {
+  PRODUCT
+  SERVICE
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BIPAY
+  TRANSFER
+}
+
+enum ReceiptType {
+  BOLETA_FISICA
+  BOLETA_ELECTRONICA
+}
+
+enum TransferStatus {
+  SENT
+  RECEIVED
+  OBSERVED
+}
+
+model Local {
+  id         String      @id @default(uuid())
+  name       String
+  code       String      @unique
+  address    String?
+  active     Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  users      User[]
+  inventory  InventoryItem[]
+  cash       CashSession[]
+  sales      Sale[]
+  activities ActivityLog[]
+  clients    Client[]
+  transfersFrom InventoryTransfer[] @relation("TransferFromLocal")
+  transfersTo   InventoryTransfer[] @relation("TransferToLocal")
+  receiptSequences ReceiptSequence[]
+}
+
+model User {
+  id            String      @id @default(uuid())
+  email         String      @unique
+  fullName      String
+  passwordHash  String
+  role          Role
+  localId       String?
+  local         Local?      @relation(fields: [localId], references: [id])
+  active        Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  movements     InventoryMovement[]
+  salesCreated  Sale[]       @relation("SaleCreatedBy")
+  salesCanceled Sale[]       @relation("SaleCanceledBy")
+  activities    ActivityLog[]
+  cashSessions  CashSession[] @relation("CashOpenedBy")
+  cashApprovals CashSession[] @relation("CashApprovedBy")
+  transfersSent     InventoryTransfer[] @relation("TransferSent")
+  transfersReceived InventoryTransfer[] @relation("TransferReceived")
+  transfersObserved InventoryTransfer[] @relation("TransferObserved")
+}
+
+model InventoryItem {
+  id          String      @id @default(uuid())
+  localId     String
+  local       Local       @relation(fields: [localId], references: [id])
+  sku         String
+  name        String
+  category    String?
+  quantity    Int         @default(0)
+  minStock    Int         @default(0)
+  cost        Decimal     @default(0)
+  price       Decimal     @default(0)
+  createdAt   DateTime    @default(now())
+  movements   InventoryMovement[]
+  transfers   InventoryTransfer[]
+
+  @@unique([localId, sku])
+}
+
+model InventoryMovement {
+  id          String      @id @default(uuid())
+  type        MovementType
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  fromLocalId String?
+  toLocalId   String?
+  quantity    Int
+  note        String?
+  reason      String?
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  createdAt   DateTime    @default(now())
+}
+
+model InventoryTransfer {
+  id            String         @id @default(uuid())
+  transferCode  String         @unique
+  itemId        String
+  item          InventoryItem  @relation(fields: [itemId], references: [id])
+  fromLocalId   String
+  fromLocal     Local          @relation("TransferFromLocal", fields: [fromLocalId], references: [id])
+  toLocalId     String
+  toLocal       Local          @relation("TransferToLocal", fields: [toLocalId], references: [id])
+  quantity      Int
+  status        TransferStatus @default(SENT)
+  note          String?
+  observation   String?
+  createdById   String
+  createdBy     User           @relation("TransferSent", fields: [createdById], references: [id])
+  receivedById  String?
+  receivedBy    User?          @relation("TransferReceived", fields: [receivedById], references: [id])
+  observedById  String?
+  observedBy    User?          @relation("TransferObserved", fields: [observedById], references: [id])
+  createdAt     DateTime       @default(now())
+  receivedAt    DateTime?
+  observedAt    DateTime?
+}
+
+model ReceiptSequence {
+  id          String      @id @default(uuid())
+  localId     String
+  local       Local       @relation(fields: [localId], references: [id])
+  receiptType ReceiptType
+  currentNumber Int       @default(0)
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([localId, receiptType])
+}
+
+model CashSession {
+  id            String     @id @default(uuid())
+  localId       String
+  local         Local      @relation(fields: [localId], references: [id])
+  userId        String
+  user          User       @relation("CashOpenedBy", fields: [userId], references: [id])
+  openedAt      DateTime   @default(now())
+  closedAt      DateTime?
+  openingAmount Decimal    @default(0)
+  expectedAmount Decimal?  
+  closingAmount Decimal?
+  difference    Decimal?
+  status        CashStatus @default(OPEN)
+  approvedById  String?
+  approvedBy    User?      @relation("CashApprovedBy", fields: [approvedById], references: [id])
+  sales         Sale[]
+}
+
+model Sale {
+  id        String        @id @default(uuid())
+  localId   String
+  local     Local         @relation(fields: [localId], references: [id])
+  userId    String
+  user      User          @relation("SaleCreatedBy", fields: [userId], references: [id])
+  cashSessionId String?
+  cashSession  CashSession? @relation(fields: [cashSessionId], references: [id])
+  clientId  String?
+  client    Client?       @relation(fields: [clientId], references: [id])
+  clientLineId String?
+  clientLine ClientLine?  @relation(fields: [clientLineId], references: [id])
+  lineNumber String?
+  subTotal  Decimal       @default(0)
+  discountTotal Decimal   @default(0)
+  total     Decimal       @default(0)
+  type      SaleType
+  method    PaymentMethod
+  receiptType ReceiptType?
+  receiptNumber String?
+  status    SaleStatus    @default(ACTIVE)
+  canceledAt DateTime?
+  canceledById String?
+  canceledBy User?        @relation("SaleCanceledBy", fields: [canceledById], references: [id])
+  cancelReason String?
+  createdAt DateTime      @default(now())
+  items     SaleItem[]
+}
+
+model SaleItem {
+  id          String   @id @default(uuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id])
+  itemId      String?
+  description String
+  quantity    Int
+  unitPrice   Decimal
+  discountAmount Decimal @default(0)
+}
+
+model Client {
+  id         String       @id @default(uuid())
+  fullName   String
+  documentId String?
+  phone      String?
+  createdAt  DateTime     @default(now())
+  localId    String?
+  local      Local?       @relation(fields: [localId], references: [id])
+  lines      ClientLine[]
+  sales      Sale[]
+}
+
+model ClientLine {
+  id        String   @id @default(uuid())
+  number    String   @unique
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  createdAt DateTime @default(now())
+  sales     Sale[]
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  localId   String?
+  local     Local?   @relation(fields: [localId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  meta      Json?
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+}

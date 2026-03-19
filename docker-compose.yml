@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    container_name: bitel_db
+    environment:
+      POSTGRES_USER: bitel
+      POSTGRES_PASSWORD: bitel
+      POSTGRES_DB: bitel_mvp
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  server:
+    build:
+      context: ./server
+    container_name: bitel_server
+    environment:
+      DATABASE_URL: postgresql://bitel:bitel@db:5432/bitel_mvp?schema=public
+      JWT_SECRET: cambia_esto
+      JWT_EXPIRES_IN: 1d
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+
+  client:
+    build:
+      context: ./client
+    container_name: bitel_client
+    environment:
+      VITE_API_URL: http://localhost:4000/api/v1
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+
+volumes:
+  db_data:

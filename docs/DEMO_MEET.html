@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bitel Multi-local — Demo Meet</title>
+    <style>
+      :root{--bg:#0b1220;--panel:rgba(15,23,42,.75);--card:rgba(255,255,255,.05);--border:rgba(255,255,255,.12);--text:rgba(255,255,255,.92);--muted:rgba(255,255,255,.74);--accent:#60a5fa;--mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;}
+      *{box-sizing:border-box}
+      body{margin:0;font-family:var(--sans);background:radial-gradient(900px 500px at 20% 0%,rgba(96,165,250,.18),transparent),radial-gradient(900px 600px at 100% 20%,rgba(52,211,153,.12),transparent),var(--bg);color:var(--text);line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      a{color:var(--accent);text-decoration:none}
+      a:hover{text-decoration:underline}
+      .wrap{max-width:980px;margin:0 auto;padding:48px 22px 90px}
+      .cover{padding:30px 26px;border:1px solid var(--border);background:linear-gradient(180deg,rgba(15,23,42,.95),rgba(15,23,42,.7));border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+      .pill{display:inline-flex;gap:8px;align-items:center;padding:7px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.05);font-size:12px;color:var(--muted)}
+      h1{margin:14px 0 10px;font-size:36px;letter-spacing:-.02em;line-height:1.12}
+      .subtitle{margin:0 0 18px;color:var(--muted);font-size:15px}
+      .grid{margin-top:18px;display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+      @media (max-width:900px){.grid{grid-template-columns:1fr}}
+      .card{border:1px solid var(--border);background:var(--card);border-radius:16px;padding:16px}
+      .card h2{margin:0 0 10px;font-size:16px}
+      .toc{margin:0;padding-left:18px;color:var(--muted)}
+      .toc li{margin:6px 0}
+      .section{margin-top:22px;border:1px solid var(--border);background:var(--panel);border-radius:18px;padding:20px}
+      h2{margin:0 0 10px;font-size:22px}
+      h3{margin:16px 0 10px;font-size:16px;color:rgba(255,255,255,.88)}
+      p{margin:10px 0;color:var(--muted)}
+      .note{border:1px dashed rgba(96,165,250,.55);background:rgba(96,165,250,.08);border-radius:14px;padding:12px 14px;color:rgba(255,255,255,.86);margin:12px 0 6px}
+      table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.03)}
+      th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+      th{font-size:12px;color:rgba(255,255,255,.82);background:rgba(255,255,255,.05);text-align:left}
+      td{font-size:13px;color:var(--muted)}
+      tr:last-child td{border-bottom:none}
+      code{font-family:var(--mono);font-size:12px;padding:2px 6px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);color:rgba(255,255,255,.86);white-space:nowrap}
+      ul{margin:10px 0;padding-left:18px;color:var(--muted)}
+      li{margin:6px 0}
+      .checklist{list-style:none;padding-left:0;margin:10px 0 0}
+      .checklist li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.03)}
+      .box{width:16px;height:16px;border-radius:5px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.12);margin-top:2px;flex:0 0 16px}
+      .chart{font-family:var(--mono);font-size:12px;border:1px solid var(--border);background:rgba(0,0,0,.14);border-radius:14px;padding:12px;overflow:auto;color:rgba(255,255,255,.86)}
+      .svg{border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.02);padding:10px;overflow:hidden}
+      .footer{margin-top:16px;color:rgba(255,255,255,.55);font-size:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+      @page{size:A4;margin:14mm}
+      @media print{.wrap{padding:0}.cover,.section{box-shadow:none}a{color:rgba(255,255,255,.92);text-decoration:none}}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <section class="cover" id="top">
+        <span class="pill">BITEL · MVP Multi-local</span>
+        <h1>Guion de demostración (Google Meet)</h1>
+        <p class="subtitle">Demo ordenada: ventas, caja, inventario, transferencias, reportes y auditoría.</p>
+        <div class="grid">
+          <div class="card">
+            <h2>Índice</h2>
+            <ol class="toc">
+              <li><a href="#agenda">Agenda rápida</a></li>
+              <li><a href="#accesos">Accesos (seed)</a></li>
+              <li><a href="#permisos">Permisos</a></li>
+              <li><a href="#flujos">Flujos</a></li>
+              <li><a href="#demo">Demo paso a paso</a></li>
+              <li><a href="#tips">Tips</a></li>
+              <li><a href="#frases">Frases</a></li>
+            </ol>
+          </div>
+          <div class="card">
+            <h2>Exportar a PDF</h2>
+            <p>Ejecuta <code>ops/export_demo_pdf.ps1</code> para generar <code>docs/DEMO_MEET.pdf</code>.</p>
+            <p class="note">Tip: usa un solo local (Pueblo Nuevo) para todo el flujo y la demo será más clara.</p>
+          </div>
+        </div>
+        <div class="footer">
+          <div>Archivo: <code>docs/DEMO_MEET.html</code></div>
+          <div><a href="#top">Volver arriba</a></div>
+        </div>
+      </section>
+      <section class="section" id="agenda">
+        <h2>Agenda rápida (recomendada)</h2>
+        <table>
+          <thead><tr><th>Bloque</th><th>Duración</th><th>Objetivo</th></tr></thead>
+          <tbody>
+            <tr><td>Introducción + login</td><td>1 min</td><td>Contexto del MVP y multi-local</td></tr>
+            <tr><td>Operación diaria (SUPERVISOR)</td><td>4–6 min</td><td>Venta + caja + comprobantes</td></tr>
+            <tr><td>Inventario (SUPERVISOR)</td><td>4–6 min</td><td>Stock, importación Excel, kardex</td></tr>
+            <tr><td>Transferencias (SUPERVISOR)</td><td>2–4 min</td><td>Envío por lote + PDF + estados</td></tr>
+            <tr><td>Reportes (SUPERVISOR)</td><td>3–5 min</td><td>KPIs, ranking, cierres, stock bajo</td></tr>
+            <tr><td>Auditoría (AUDITOR)</td><td>3–5 min</td><td>Control sin riesgo (solo lectura)</td></tr>
+            <tr><td>Cierre (ADMIN)</td><td>1 min</td><td>Control total (backup / mantenimiento)</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section class="section" id="accesos">
+        <h2>Accesos para probar (seed)</h2>
+        <p>Usuarios creados por el seed: <code>npm --prefix server run seed</code>.</p>
+        <table>
+          <thead><tr><th>Rol</th><th>Correo</th><th>Contraseña</th><th>Local</th></tr></thead>
+          <tbody>
+            <tr><td><code>SUPERVISOR</code></td><td><code>supervisor.pn@bitel.local</code></td><td><code>demo123</code></td><td>Pueblo Nuevo (<code>LALDA67</code>)</td></tr>
+            <tr><td><code>AUDITOR</code></td><td><code>auditor@bitel.local</code></td><td><code>demo123</code></td><td>N/A</td></tr>
+            <tr><td><code>VENDEDOR</code></td><td><code>vendedor.pn@bitel.local</code></td><td><code>demo123</code></td><td>Pueblo Nuevo (<code>LALDA67</code>)</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section class="section" id="permisos">
+        <h2>Matriz de permisos (resumen)</h2>
+        <p>Leyenda: ✅ permitido · ⚠️ acotado por local · ❌ no permitido.</p>
+        <table>
+          <thead><tr><th>Acción</th><th style="text-align:center">ADMIN</th><th style="text-align:center">SUPERVISOR</th><th style="text-align:center">AUDITOR</th></tr></thead>
+          <tbody>
+            <tr><td>Operar ventas / caja / inventario</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">❌</td></tr>
+            <tr><td>Ver reportes + auditoría</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">✅</td></tr>
+            <tr><td>Exportar Excel/PDF</td><td style="text-align:center">✅</td><td style="text-align:center">⚠️</td><td style="text-align:center">✅</td></tr>
+          </tbody>
+        </table>
+        <p class="note">El rol <b>AUDITOR</b> ve el sistema “como admin” pero con acciones deshabilitadas (solo lectura).</p>
+      </section>
+      <section class="section" id="flujos">
+        <h2>Flujos (diagramas)</h2>
+        <h3>Venta + caja + auditoría</h3>
+        <div class="svg">
+          <svg viewBox="0 0 980 160" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <style>.n{fill:rgba(255,255,255,.04);stroke:rgba(255,255,255,.14);stroke-width:1.2}.t{fill:rgba(255,255,255,.88);font:12px ui-sans-serif,system-ui}.a{stroke:rgba(96,165,250,.85);stroke-width:1.4;fill:none;marker-end:url(#ar)}</style>
+              <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(96,165,250,.85)" /></marker>
+            </defs>
+            <rect class="n" x="22" y="28" rx="12" ry="12" width="200" height="56"/><text class="t" x="40" y="60">Operación diaria</text>
+            <rect class="n" x="262" y="28" rx="12" ry="12" width="200" height="56"/><text class="t" x="280" y="60">Registrar venta</text>
+            <rect class="n" x="502" y="28" rx="12" ry="12" width="200" height="56"/><text class="t" x="520" y="60">Caja (open/tx/close)</text>
+            <rect class="n" x="742" y="28" rx="12" ry="12" width="216" height="56"/><text class="t" x="760" y="60">Auditoría (logs)</text>
+            <path class="a" d="M 222 56 L 262 56" /><path class="a" d="M 462 56 L 502 56" /><path class="a" d="M 702 56 L 742 56" />
+          </svg>
+        </div>
+        <h3>Ruta de la demo (barra)</h3>
+        <div class="chart">Login [##]\nOperación diaria [######]\nInventario [######]\nTransferencias [####]\nReportes [#####]\nAuditoría [#####]\nCierre [##]</div>
+      </section>
+      <section class="section" id="demo">
+        <h2>Demo paso a paso</h2>
+        <h3>Paso 1: Operación diaria (SUPERVISOR)</h3>
+        <ul class="checklist">
+          <li><span class="box"></span><span>Entrar con <code>supervisor.pn@bitel.local</code>.</span></li>
+          <li><span class="box"></span><span>Registrar 1 venta y mostrar “Ventas recientes”.</span></li>
+          <li><span class="box"></span><span>Abrir caja, registrar 1 movimiento, cerrar caja.</span></li>
+          <li><span class="box"></span><span>Descargar 1 comprobante PDF.</span></li>
+        </ul>
+        <h3>Paso 2: Inventario + Kardex (SUPERVISOR)</h3>
+        <ul class="checklist">
+          <li><span class="box"></span><span>Filtrar inventario por local y editar 1 producto.</span></li>
+          <li><span class="box"></span><span>Descargar plantilla Excel y explicar importación.</span></li>
+          <li><span class="box"></span><span>Registrar 1 ajuste y mostrarlo en kardex.</span></li>
+        </ul>
+        <h3>Paso 3: Auditoría (AUDITOR)</h3>
+        <ul class="checklist">
+          <li><span class="box"></span><span>Entrar con <code>auditor@bitel.local</code>.</span></li>
+          <li><span class="box"></span><span>Mostrar acciones deshabilitadas (solo lectura).</span></li>
+          <li><span class="box"></span><span>Filtrar auditoría y mostrar historial.</span></li>
+        </ul>
+      </section>
+      <section class="section" id="tips">
+        <h2>Tips</h2>
+        <table>
+          <thead><tr><th>Haz</th><th>Evita</th></tr></thead>
+          <tbody>
+            <tr><td>Usar 1 local (Pueblo Nuevo) para todo</td><td>Saltar de local en local</td></tr>
+            <tr><td>1 venta completa + su PDF</td><td>Registrar muchas ventas en vivo</td></tr>
+            <tr><td>1 filtro de auditoría (acción/entidad/local)</td><td>Abrir auditoría sin filtrar</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section class="section" id="frases">
+        <h2>Frases cortas (para cerrar)</h2>
+        <ul>
+          <li>"El sistema es multi-local: cada usuario puede quedar asignado a un local y se restringe automáticamente."</li>
+          <li>"Supervisor opera el día a día: ventas, caja, inventario y transferencias."</li>
+          <li>"Auditor es 'solo lectura': ve todo para control, sin posibilidad de modificar."</li>
+          <li>"Cada acción relevante deja auditoría para trazabilidad y reportes."</li>
+        </ul>
+        <p class="note">Exportar a PDF: <code>ops/export_demo_pdf.ps1</code> → <code>docs/DEMO_MEET.pdf</code>.</p>
+      </section>
+      <div class="footer"><div>Documento: <code>docs/DEMO_MEET.html</code></div><div><a href="#top">Volver arriba</a></div></div>
+    </div>
+  </body>
+</html>

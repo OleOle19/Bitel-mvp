@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Informe Integral del Sistema BITEL Multi-local (MVP)</title>
+    <style>
+      :root{
+        --bg:#ffffff;
+        --text:#111827;
+        --muted:#374151;
+        --border:#e5e7eb;
+        --header:#0f172a;
+        --headerText:#ffffff;
+        --codeBg:#f3f4f6;
+        --calloutBg:#eff6ff;
+        --calloutBorder:#93c5fd;
+        --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+      *{box-sizing:border-box}
+      body{margin:0;font-family:var(--sans);color:var(--text);background:var(--bg);line-height:1.55}
+      .wrap{max-width:920px;margin:0 auto;padding:34px 18px 60px}
+      header{
+        border:1px solid var(--border);
+        border-radius:14px;
+        padding:18px 18px 14px;
+        background:linear-gradient(180deg, #0f172a, #111827);
+        color:var(--headerText);
+      }
+      header h1{margin:0 0 6px;font-size:26px;letter-spacing:-.01em}
+      header p{margin:0;color:rgba(255,255,255,.85);font-size:13px}
+      header .meta{margin-top:10px;color:rgba(255,255,255,.72);font-size:12px}
+      main{margin-top:18px}
+      h1,h2,h3,h4,h5,h6{color:#0f172a;letter-spacing:-.01em}
+      h2{margin:22px 0 10px;padding-top:6px;border-top:1px solid var(--border)}
+      h3{margin:16px 0 8px}
+      p{margin:10px 0;color:var(--muted)}
+      a{color:#2563eb;text-decoration:none}
+      a:hover{text-decoration:underline}
+      code{
+        font-family:var(--mono);
+        font-size:12px;
+        background:var(--codeBg);
+        border:1px solid var(--border);
+        padding:1px 6px;
+        border-radius:10px;
+      }
+      pre{
+        background:var(--codeBg);
+        border:1px solid var(--border);
+        border-radius:12px;
+        padding:12px;
+        overflow:auto;
+      }
+      pre code{border:none;padding:0;background:transparent}
+      table{
+        width:100%;
+        border-collapse:separate;
+        border-spacing:0;
+        border:1px solid var(--border);
+        border-radius:12px;
+        overflow:hidden;
+        margin:12px 0;
+      }
+      th,td{
+        padding:9px 10px;
+        border-bottom:1px solid var(--border);
+        vertical-align:top;
+      }
+      th{
+        background:#f9fafb;
+        font-size:12px;
+        color:#111827;
+        text-transform:none;
+      }
+      tr:last-child td{border-bottom:none}
+      ul,ol{margin:10px 0;padding-left:18px;color:var(--muted)}
+      li{margin:6px 0}
+      blockquote.callout{
+        margin:12px 0;
+        padding:12px 14px;
+        border-radius:12px;
+        background:var(--calloutBg);
+        border:1px solid var(--calloutBorder);
+      }
+      blockquote.callout p{margin:6px 0;color:#0f172a}
+      ul.checklist{list-style:none;padding-left:0;margin-left:0}
+      ul.checklist li.check-item{
+        display:flex;
+        gap:10px;
+        align-items:flex-start;
+        padding:7px 10px;
+        border:1px solid var(--border);
+        border-radius:10px;
+        margin:8px 0;
+        background:#ffffff;
+      }
+      .box{
+        width:14px;height:14px;border:1px solid #9ca3af;border-radius:4px;margin-top:3px;flex:0 0 14px;
+      }
+      .box.checked{background:#111827}
+      @page{size:A4;margin:14mm}
+      @media print{a{color:#111827;text-decoration:none}}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Informe Integral del Sistema BITEL Multi-local (MVP)</h1>
+        <p>Exportado desde docs/INFORME_SISTEMA_SR_2026-03-19.md</p>
+        <div class="meta">Generado: 2026-03-19 01:20</div>
+      </header>
+      <main>
+<h1>Informe Integral del Sistema BITEL Multi-local (MVP)</h1>
+<p>Fecha: 2026-03-19 Version del documento: 2.0</p>
+<h2>1) Resumen ejecutivo</h2>
+<p>El sistema BITEL Multi-local es un MVP funcional para operar ventas, caja, inventario, clientes y reportes en varios locales, con control por rol y trazabilidad de actividades.</p>
+<p>Valor principal para negocio:</p>
+<ul><li>Centraliza la operacion diaria en una sola plataforma.</li><li>Da visibilidad en tiempo real de ventas, caja e inventario.</li><li>Reduce riesgo operativo mediante auditoria y controles por usuario/local.</li><li>Permite evidencia formal con exportables (PDF, Excel, CSV, JSON).</li></ul>
+<p>Estado actual:</p>
+<ul><li>El sistema esta listo para operacion demo y piloto controlado.</li><li>Tiene una base solida para evolucion a produccion, con mejoras puntuales de seguridad, gobierno de permisos y automatizacion de pruebas.</li></ul>
+<p>---</p>
+<h2>2) Objetivo del sistema</h2>
+<p>Habilitar gestion operativa multi-local para:</p>
+<ul><li>Registro y control de ventas.</li><li>Apertura/cierre y conciliacion de caja.</li><li>Control de stock, kardex y transferencias entre locales.</li><li>Gestion de clientes y consulta documental.</li><li>Reporteria y exportacion para seguimiento gerencial.</li><li>Trazabilidad completa de acciones criticas.</li></ul>
+<p>---</p>
+<h2>3) Arquitectura y stack tecnologico</h2>
+<h3>Backend</h3>
+<ul><li>NestJS (API REST)</li><li>Prisma ORM + PostgreSQL</li><li>JWT para autenticacion</li><li>Guards por rol (<code>ADMIN</code>, <code>AUDITOR</code>, <code>VENDEDOR</code>, <code>ALMACEN</code>)</li><li>PDFKit para reportes/comprobantes PDF</li><li>ExcelJS para exportes/importes XLSX</li><li>Nodemailer SMTP para envio de comprobante electronico por correo</li></ul>
+<p>Base URL API:</p>
+<ul><li><code>http://localhost:4000/api/v1</code> (prefijo global <code>api/v1</code>)</li></ul>
+<h3>Frontend</h3>
+<ul><li>React + Vite</li><li>TanStack Query para consumo de API y cache</li><li>Control de sesion por token (localStorage)</li><li>Cola offline de ventas para reintento automatico/manual</li></ul>
+<h3>Modulo de datos</h3>
+<p>Entidades principales:</p>
+<ul><li><code>Local</code>, <code>User</code>, <code>InventoryItem</code>, <code>InventoryMovement</code>, <code>InventoryTransfer</code></li><li><code>CashSession</code>, <code>Sale</code>, <code>SaleItem</code></li><li><code>Client</code>, <code>ClientLine</code></li><li><code>ActivityLog</code>, <code>ReceiptSequence</code></li></ul>
+<p>---</p>
+<h2>4) Funcionalidades implementadas (estado real)</h2>
+<h2>4.1 Autenticacion y usuarios</h2>
+<ul><li>Login con JWT.</li><li>Registro de usuarios (solo <code>ADMIN</code>).</li><li>Administracion de usuarios (listar/actualizar, solo <code>ADMIN</code>).</li><li>Locales: listado y lookup para formularios; alta de local solo <code>ADMIN</code>.</li></ul>
+<h2>4.2 Ventas y comprobantes</h2>
+<ul><li>Registro de venta con items, descuentos, metodo de pago y tipo de comprobante.</li><li>Numeracion automatica de comprobante por local/tipo.</li><li>Validacion de caja abierta para poder vender.</li><li>Descuento atomico de stock al vender (evita sobreventa concurrente).</li><li>Anulacion de ventas activas con reversa de stock y trazabilidad.</li><li>Descarga PDF de comprobante.</li><li>Envio de comprobante electronico por email via SMTP (Gmail ya soportado).</li></ul>
+<h2>4.3 Caja operativa</h2>
+<ul><li>Apertura de caja por local.</li><li>Regla de reapertura diaria (no-admin limitado; admin con confirmacion).</li><li>Movimientos de caja (gasto/deposito/retiro) con motivo.</li><li>Cierre de caja con calculo de esperado y diferencia.</li><li>Cierre forzado (<code>ADMIN</code>/<code>AUDITOR</code>).</li><li>Descarga PDF de cierre de caja.</li><li>Consulta de transacciones por sesion.</li></ul>
+<h2>4.4 Inventario y transferencias</h2>
+<ul><li>CRUD de items por local.</li><li>Ajustes de inventario (IN/OUT) con kardex.</li><li>Transferencia simple y por lote entre locales.</li><li>Recepcion total/parcial de transferencias.</li><li>Observacion y devolucion de transferencias.</li><li>Impresion PDF de transferencia simple y de lote.</li><li>Carga de inventario por CSV y por Excel.</li><li>Descarga de plantilla Excel para carga.</li></ul>
+<h2>4.5 Clientes</h2>
+<ul><li>Alta y busqueda de clientes.</li><li>Alta de lineas asociadas.</li><li>Historial de ventas por cliente.</li><li>Cuenta corriente basica (deudas/pagos como eventos de actividad).</li><li>Lookup de documento:</li><li>Primero en base local.</li><li>Opcionalmente en RENIEC/SUNAT si existe token configurado.</li></ul>
+<h2>4.6 Reportes y exportables</h2>
+<ul><li>Resumen por periodo (<code>day</code>, <code>week</code>, <code>month</code>, <code>year</code>).</li><li>Alertas operativas (stock bajo, diferencias de caja, transferencias pendientes/observadas).</li><li>KPIs y totales por metodo.</li><li>Ventas por vendedor, local, categoria y top productos.</li><li>Busqueda global operativa (inventario/clientes/ventas/caja).</li><li>Conciliacion de caja por sesion.</li><li>Exportes:</li><li>CSV: resumen, cierres de caja.</li><li>XLSX: resumen, cierres, stock bajo, inventario, movimientos.</li><li>PDF: resumen, inventario, comprobantes, transferencias, cierre de caja.</li><li>Backup JSON completo (solo <code>ADMIN</code>).</li></ul>
+<h2>4.7 Auditoria y mantenimiento</h2>
+<ul><li>Registro de actividad transversal (<code>ActivityLog</code>) en acciones criticas.</li><li>Filtros por local, usuario, accion, entidad y rango de fechas.</li><li>Limpieza de demo (<code>reset-demo</code>) con confirmacion estricta <code>RESET</code> (solo <code>ADMIN</code>).</li></ul>
+<p>---</p>
+<h2>5) Matriz de roles (configuracion actual en codigo)</h2>
+<table><thead><tr><th style="text-align:left">Capacidad</th><th style="text-align:left">ADMIN</th><th style="text-align:left">AUDITOR</th><th style="text-align:left">VENDEDOR</th><th style="text-align:left">ALMACEN</th></tr></thead><tbody><tr><td style="text-align:left">Dashboard / resumen</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">No</td></tr><tr><td style="text-align:left">Operacion diaria (ventas/caja)</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">No</td></tr><tr><td style="text-align:left">Inventario (consulta/gestion)</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td></tr><tr><td style="text-align:left">Transferencias (enviar/recibir/observar)</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td></tr><tr><td style="text-align:left">Clientes</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">No</td></tr><tr><td style="text-align:left">Reportes y exportes</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">Si</td><td style="text-align:left">No</td></tr><tr><td style="text-align:left">Backup JSON</td><td style="text-align:left">Si</td><td style="text-align:left">No</td><td style="text-align:left">No</td><td style="text-align:left">No</td></tr><tr><td style="text-align:left">Auditoria de logs</td><td style="text-align:left">Si</td><td style="text-align:left">No</td><td style="text-align:left">No</td><td style="text-align:left">No</td></tr><tr><td style="text-align:left">Mantenimiento reset demo</td><td style="text-align:left">Si</td><td style="text-align:left">No</td><td style="text-align:left">No</td><td style="text-align:left">No</td></tr><tr><td style="text-align:left">Gestion de usuarios/locales (alta/edicion)</td><td style="text-align:left">Si</td><td style="text-align:left">No</td><td style="text-align:left">No</td><td style="text-align:left">No</td></tr></tbody></table>
+<p>Nota importante de gobierno:</p>
+<ul><li>En la configuracion actual, <code>AUDITOR</code> y <code>VENDEDOR</code> tienen permisos operativos amplios (incluyendo ventas/caja y reportes). Esto puede mantenerse para demo, pero conviene redefinir para produccion segun politica interna.</li></ul>
+<p>---</p>
+<h2>6) Fortalezas (pros)</h2>
+<ol><li>Cobertura end-to-end de la operacion comercial: venta, caja, inventario, cliente, reporte.</li><li>Arquitectura modular y mantenible (NestJS por dominios + Prisma).</li><li>Control por local y por rol desde backend (guardas y validaciones server-side).</li><li>Trazabilidad consistente de eventos criticos (auditoria transversal).</li><li>Salidas ejecutivas listas para supervision (PDF, XLSX, CSV, JSON).</li><li>Transferencias por lote con flujo completo (envio, recepcion, observacion, devolucion).</li><li>Soporte de contingencia comercial con cola offline en frontend.</li><li>Integracion SMTP para comprobante electronico por correo.</li><li>Preparado para integracion documental externa (RENIEC/SUNAT via token).</li></ol>
+<p>---</p>
+<h2>7) Riesgos y brechas detectadas</h2>
+<ol><li>Gobierno de permisos: <code>AUDITOR</code> hoy puede operar procesos que usualmente son solo lectura.</li><li>Seguridad web: CORS abierto (<code>origin: true</code>) y token en localStorage.</li><li>Seguridad de API: falta rate limiting y hardening adicional para exposicion publica.</li><li>Calidad automatizada: no hay suite formal de pruebas unitarias/integracion/e2e.</li><li>Costo de inventario: en altas/ediciones/importes se fuerza <code>cost=0</code>, lo que puede distorsionar KPIs de margen.</li><li>API de auditoria duplicada (<code>/activity</code> y <code>/logs</code>) con misma funcionalidad.</li><li>Operacion productiva: faltan piezas no funcionales (monitoreo, backups programados, alertas operativas centralizadas, CI/CD formal).</li></ol>
+<p>---</p>
+<h2>8) Recomendaciones priorizadas (roadmap sugerido)</h2>
+<h2>Fase 1 (0-30 dias)</h2>
+<ol><li>Redefinir matriz de roles para produccion (especialmente <code>AUDITOR</code>).</li><li>Endurecer seguridad base:</li></ol>
+<ul><li>CORS por dominios explicitos.</li><li>Politica de expiracion/renovacion de token.</li><li>Limitacion de intentos de login (rate limit).</li></ul>
+<ol><li>Corregir logica de <code>cost</code> en inventario para proteger KPIs financieros.</li><li>Unificar endpoint de auditoria en una sola ruta oficial.</li></ol>
+<h2>Fase 2 (30-60 dias)</h2>
+<ol><li>Implementar pruebas unitarias y de integracion para modulos criticos (ventas, caja, transferencias).</li><li>Agregar monitoreo tecnico (health checks, logs estructurados, alertas).</li><li>Fortalecer trazabilidad con reportes de control interno por rol/local.</li></ol>
+<h2>Fase 3 (60-90 dias)</h2>
+<ol><li>Integracion con servicios corporativos externos (facturacion/comunicaciones/ERP si aplica).</li><li>Endurecimiento de plataforma para produccion:</li></ol>
+<ul><li>Backup/restore automatizado.</li><li>Observabilidad completa.</li><li>Pipeline CI/CD con gates de calidad.</li></ul>
+<p>---</p>
+<h2>9) Indicadores para seguimiento gerencial</h2>
+<ol><li>Venta diaria por local y ticket promedio.</li><li>Tasa de cierres de caja con diferencia distinta de cero.</li><li>Rotacion y quiebres de stock por categoria/local.</li><li>Tiempo promedio de transferencia (envio a recepcion).</li><li>Porcentaje de comprobantes electronicos enviados exitosamente.</li><li>Uso de cola offline y tasa de reintento exitoso.</li><li>Productividad por vendedor (ventas, items, margen).</li></ol>
+<p>---</p>
+<h2>10) Guion recomendado para presentacion al Sr.</h2>
+<ol><li>Resumen ejecutivo: problema resuelto y valor para operacion.</li><li>Demo de flujo central:</li></ol>
+<ul><li>Venta -&gt; comprobante PDF -&gt; envio email.</li><li>Apertura/cierre de caja con diferencia.</li><li>Transferencia de inventario por lote con PDF.</li></ul>
+<ol><li>Reportes y exportes para toma de decisiones.</li><li>Cierre con fortalezas actuales y plan 30/60/90 dias para produccion.</li></ol>
+<p>---</p>
+<h2>11) Conclusion</h2>
+<p>El sistema ya demuestra capacidad real para administrar operacion multi-local con control, trazabilidad y reporteria ejecutiva. Para pasar de MVP a plataforma productiva, la brecha principal no es funcional sino de gobierno, seguridad y calidad automatizada. Con el roadmap propuesto, el sistema puede escalar a un entorno de mayor criticidad con riesgo controlado y retorno operativo tangible.</p>
+      </main>
+    </div>
+  </body>
+</html>
