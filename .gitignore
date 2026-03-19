@@ -9,6 +9,7 @@ build/
 *.log
 tmp/
 docs/
+tools/
 coverage/
 .vscode/
 .idea/

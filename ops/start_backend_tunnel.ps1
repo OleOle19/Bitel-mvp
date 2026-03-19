@@ -22,7 +22,9 @@ function Is-TryCloudflarePublicUrl {
   if (-not $Url) { return $false }
   try {
     $uri = [System.Uri]$Url
-    $host = String($uri.Host).ToLowerInvariant()
+    $host = [string]$uri.Host
+    if (-not $host) { return $false }
+    $host = $host.ToLowerInvariant()
     if (-not $host.EndsWith(".trycloudflare.com")) { return $false }
     if ($host -eq "api.trycloudflare.com" -or $host -eq "trycloudflare.com") { return $false }
     return $true
@@ -35,7 +37,7 @@ function Test-TcpQuick {
   param(
     [Parameter(Mandatory = $true)][string]$RemoteHost,
     [Parameter(Mandatory = $true)][int]$Port,
-    [int]$TimeoutMs = 2500
+    [int]$TimeoutMs = 1500
   )
 
   $client = $null
@@ -52,6 +54,22 @@ function Test-TcpQuick {
     if ($client) {
       $client.Dispose()
     }
+  }
+}
+
+function Test-LocalHttpReady {
+  param(
+    [Parameter(Mandatory = $true)][string]$Url
+  )
+
+  try {
+    $null = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 2
+    return $true
+  } catch {
+    if ($_.Exception.Response) {
+      return $true
+    }
+    return $false
   }
 }
 
@@ -82,191 +100,190 @@ function Get-ListeningPidsOnPort {
   return @($pidSet)
 }
 
-function Get-LatestTryCloudflareUrl {
+function Get-ProcessCommandLine {
   param(
-    [Parameter(Mandatory = $true)][string]$LogPath,
-    [Parameter(Mandatory = $true)][regex]$UrlRegex
+    [Parameter(Mandatory = $true)][int]$Pid
   )
 
-  if (-not (Test-Path $LogPath)) {
-    return $null
-  }
-
   try {
-    $lines = Get-Content -Path $LogPath -Tail 300 -ErrorAction Stop
-    if (-not $lines) {
-      return $null
-    }
-
-    for ($lineIdx = $lines.Count - 1; $lineIdx -ge 0; $lineIdx--) {
-      $line = [string]$lines[$lineIdx]
-      if (-not $line) {
-        continue
-      }
-      $matches = $UrlRegex.Matches($line)
-      if ($matches.Count -eq 0) {
-        continue
-      }
-      for ($idx = $matches.Count - 1; $idx -ge 0; $idx--) {
-        $candidate = $matches[$idx].Value
-        if (Is-TryCloudflarePublicUrl -Url $candidate) {
-          return $candidate
-        }
-      }
-    }
-    return $null
+    $proc = Get-CimInstance Win32_Process -Filter "ProcessId=$Pid" -ErrorAction Stop
+    return [string]$proc.CommandLine
   } catch {
     return $null
   }
 }
 
+function Get-LastLogLines {
+  param(
+    [Parameter(Mandatory = $true)][string]$Path,
+    [int]$Lines = 12
+  )
+
+  if (-not (Test-Path $Path)) {
+    return ""
+  }
+
+  try {
+    return (Get-Content -Path $Path -Tail $Lines -ErrorAction Stop | Out-String).Trim()
+  } catch {
+    return ""
+  }
+}
+
+function Get-LatestTryCloudflareUrl {
+  param(
+    [Parameter(Mandatory = $true)][string[]]$Paths
+  )
+
+  $regex = [regex]"https://[A-Za-z0-9-]+\.trycloudflare\.com"
+
+  foreach ($path in $Paths) {
+    if (-not (Test-Path $path)) {
+      continue
+    }
+
+    try {
+      $lines = Get-Content -Path $path -Tail 400 -ErrorAction Stop
+      if (-not $lines) {
+        continue
+      }
+
+      for ($lineIdx = $lines.Count - 1; $lineIdx -ge 0; $lineIdx--) {
+        $line = [string]$lines[$lineIdx]
+        if (-not $line) {
+          continue
+        }
+        $matches = $regex.Matches($line)
+        if ($matches.Count -eq 0) {
+          continue
+        }
+        for ($idx = $matches.Count - 1; $idx -ge 0; $idx--) {
+          $candidate = [string]$matches[$idx].Value
+          if (Is-TryCloudflarePublicUrl -Url $candidate) {
+            return $candidate
+          }
+        }
+      }
+    } catch {}
+  }
+
+  return $null
+}
+
 & (Join-Path $PSScriptRoot "stop_backend_tunnel.ps1") | Out-Null
 
-Remove-Item -Path $backendOutLog, $backendErrLog, $tunnelLog, $tunnelOutLog, $tunnelErrLog, $tunnelUrlFile -Force -ErrorAction SilentlyContinue
+Remove-Item -Path $backendOutLog, $backendErrLog, $tunnelLog, $tunnelOutLog, $tunnelErrLog, $backendPidFile, $tunnelPidFile, $tunnelUrlFile -Force -ErrorAction SilentlyContinue
 
-if (-not (Get-Command cloudflared -ErrorAction SilentlyContinue)) {
-  throw "No se encontro cloudflared en PATH. Instala cloudflared o agrega su ruta al PATH."
+$cloudflaredExe = $null
+$cloudflaredCommand = Get-Command cloudflared -ErrorAction SilentlyContinue
+if ($cloudflaredCommand) {
+  $cloudflaredExe = [string]$cloudflaredCommand.Source
 }
-$cloudflaredExe = (Get-Command cloudflared -ErrorAction SilentlyContinue).Source
-
-$cloudflaredExeForRule = $cloudflaredExe
-try {
-  $cfItem = Get-Item -Path $cloudflaredExe -ErrorAction SilentlyContinue
-  if ($cfItem -and $cfItem.LinkType -and $cfItem.Target) {
-    $targetPath = $cfItem.Target | Select-Object -First 1
-    if ($targetPath) {
-      $cloudflaredExeForRule = [string]$targetPath
-    }
-  }
-} catch {}
-Write-Host "[CHECK] Verificando conectividad a api.trycloudflare.com:443 ..."
-$canReachTunnelApi = Test-TcpQuick -RemoteHost "api.trycloudflare.com" -Port 443 -TimeoutMs 2500
-if (-not $canReachTunnelApi) {
-  Write-Host "[WARN] No se pudo confirmar salida TCP a api.trycloudflare.com:443."
-  Write-Host "[WARN] Se continuara de todas formas para intentar crear el tunnel."
-  Write-Host "[SUGERENCIA] Si falla, revisa firewall/antivirus/VPN/proxy."
-  if ($cloudflaredExeForRule) {
-    Write-Host "[SUGERENCIA] Regla sugerida (PowerShell como administrador):"
-    Write-Host "New-NetFirewallRule -DisplayName 'Allow cloudflared outbound 443' -Direction Outbound -Action Allow -Program '$cloudflaredExeForRule' -Protocol TCP -RemotePort 443"
+if (-not $cloudflaredExe) {
+  $localCloudflared = Join-Path $root "tools/cloudflared.exe"
+  if (Test-Path $localCloudflared) {
+    $cloudflaredExe = $localCloudflared
   }
 }
+if (-not $cloudflaredExe) {
+  throw "No se encontro cloudflared. Instala cloudflared y agrega su ruta al PATH."
+}
 
+Write-Host "[START] Iniciando backend..."
 $backendProc = Start-Process -FilePath "npm.cmd" -ArgumentList @("--prefix", "server", "run", "start:dev") -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $backendOutLog -RedirectStandardError $backendErrLog -PassThru
+Set-Content -Path $backendPidFile -Value $backendProc.Id -Encoding ascii
 
 $backendPort = 4000
 $backendReady = $false
-for ($i = 0; $i -lt 40; $i++) {
-  Start-Sleep -Milliseconds 500
-  if (Test-TcpQuick -RemoteHost "127.0.0.1" -Port $backendPort -TimeoutMs 250) {
+$backendProbeUrl = "http://127.0.0.1:4000/api/v1"
+for ($i = 0; $i -lt 70; $i++) {
+  Start-Sleep -Seconds 1
+
+  if (Test-LocalHttpReady -Url $backendProbeUrl) {
     $backendReady = $true
     break
   }
+
   if (-not (Get-Process -Id $backendProc.Id -ErrorAction SilentlyContinue)) {
     break
   }
 }
 
-$backendRuntimePid = $backendProc.Id
 if (-not $backendReady) {
-  $portPids = Get-ListeningPidsOnPort -Port $backendPort
-  if ($portPids.Count -gt 0) {
-    $backendRuntimePid = [int]$portPids[0]
-    $backendReady = $true
-    Write-Host "[INFO] Puerto 4000 ya en uso. Se reutilizara backend existente (PID $backendRuntimePid)."
-  }
-}
-
-if (-not $backendReady) {
-  $backendErrPreview = ""
-  if (Test-Path $backendErrLog) {
-    $backendErrPreview = (Get-Content -Path $backendErrLog -Tail 12 -ErrorAction SilentlyContinue | Out-String).Trim()
-  }
+  $backendErrPreview = Get-LastLogLines -Path $backendErrLog -Lines 20
   if ($backendErrPreview) {
-    Write-Host "[ERROR] Detalle backend:"
+    Write-Host "[ERROR] Ultimas lineas backend stderr:"
     Write-Host $backendErrPreview
   }
-  throw "Backend no quedo listo en puerto 4000. Revisa logs: $backendOutLog | $backendErrLog"
+
+  $portPids = Get-ListeningPidsOnPort -Port $backendPort
+  if ($portPids.Count -gt 0) {
+    foreach ($pid in $portPids) {
+      if ($pid -eq $backendProc.Id) {
+        continue
+      }
+      $cmd = Get-ProcessCommandLine -Pid $pid
+      Write-Host "[ERROR] Puerto 4000 ocupado por PID $pid."
+      if ($cmd) {
+        Write-Host "[ERROR] Comando PID ${pid}: $cmd"
+      }
+    }
+  }
+
+  throw "Backend no quedo listo en http://127.0.0.1:4000. Revisa logs: $backendOutLog | $backendErrLog"
 }
 
-Set-Content -Path $backendPidFile -Value $backendRuntimePid -Encoding ascii
-Write-Host "[START] Backend iniciado. PID: $backendRuntimePid"
+Write-Host "[OK] Backend listo. PID: $($backendProc.Id)"
 
-$localApiUrl = "http://localhost:4000/api/v1"
+$localApiUrl = "http://127.0.0.1:4000/api/v1"
 Set-Content -Path $clientEnvLocal -Value "VITE_API_URL=$localApiUrl" -Encoding ascii
 Remove-Item -Path $tunnelUrlFile -Force -ErrorAction SilentlyContinue
 
-$regex = [regex]"https://[A-Za-z0-9-]+\.trycloudflare\.com"
-$timeoutSeconds = 35
-$maxAttempts = 8
-$tunnelUrl = $null
-$tunnelEndedEarly = $false
-$tunnelActiveWithoutUrl = $false
-$lastErrPreview = ""
-
-for ($attempt = 1; $attempt -le $maxAttempts -and -not $tunnelUrl; $attempt++) {
-  if ($attempt -gt 1) {
-    Write-Host "[RETRY] Reintentando tunnel ($attempt/$maxAttempts)..."
-  }
-
-  Remove-Item -Path $tunnelLog, $tunnelOutLog, $tunnelErrLog -Force -ErrorAction SilentlyContinue
-
-  $tunnelArgs = @(
+$attemptProfiles = @(
+  @(
+    "tunnel",
+    "--url", "http://127.0.0.1:4000",
+    "--edge-ip-version", "4",
+    "--protocol", "http2",
+    "--no-autoupdate"
+  ),
+  @(
     "tunnel",
     "--url", "http://127.0.0.1:4000",
     "--edge-ip-version", "4",
     "--no-autoupdate"
   )
-  $tunnelProc = Start-Process -FilePath "cloudflared" -ArgumentList $tunnelArgs -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $tunnelOutLog -RedirectStandardError $tunnelErrLog -PassThru
+)
+
+$tunnelUrl = $null
+$lastErrPreview = ""
+$maxSecondsPerAttempt = 75
+
+for ($attempt = 1; $attempt -le $attemptProfiles.Count -and -not $tunnelUrl; $attempt++) {
+  if ($attempt -gt 1) {
+    Write-Host "[RETRY] Reintentando tunnel ($attempt/$($attemptProfiles.Count))..."
+  }
+
+  Remove-Item -Path $tunnelLog, $tunnelOutLog, $tunnelErrLog -Force -ErrorAction SilentlyContinue
+
+  $tunnelArgs = $attemptProfiles[$attempt - 1]
+  $tunnelProc = Start-Process -FilePath $cloudflaredExe -ArgumentList $tunnelArgs -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $tunnelOutLog -RedirectStandardError $tunnelErrLog -PassThru
   Set-Content -Path $tunnelPidFile -Value $tunnelProc.Id -Encoding ascii
   Write-Host "[START] Tunnel iniciado. PID: $($tunnelProc.Id)"
 
-  $deadline = (Get-Date).AddSeconds($timeoutSeconds)
-  $tunnelEndedEarly = $false
-  $tunnelUrlSources = @($tunnelErrLog, $tunnelOutLog, $tunnelLog)
-  $iteration = 0
-
-  while ((Get-Date) -lt $deadline) {
+  for ($sec = 1; $sec -le $maxSecondsPerAttempt; $sec++) {
     Start-Sleep -Seconds 1
-    $iteration++
 
-    $logFiles = $tunnelUrlSources | Where-Object { Test-Path $_ }
-    if ($logFiles.Count -gt 0) {
-      if (-not $tunnelUrl) {
-        $matches = Select-String -Path $logFiles -Pattern $regex.ToString() -AllMatches -ErrorAction SilentlyContinue
-        if ($matches) {
-          for ($mIdx = $matches.Count - 1; $mIdx -ge 0; $mIdx--) {
-            $matchItem = $matches[$mIdx]
-            if ($matchItem.Matches -and $matchItem.Matches.Count -gt 0) {
-              for ($vIdx = $matchItem.Matches.Count - 1; $vIdx -ge 0; $vIdx--) {
-                $candidate = $matchItem.Matches[$vIdx].Value
-                if (Is-TryCloudflarePublicUrl -Url $candidate) {
-                  $tunnelUrl = $candidate
-                  break
-                }
-              }
-            }
-            if ($tunnelUrl) {
-              break
-            }
-          }
-        }
-      }
-    }
-
+    $tunnelUrl = Get-LatestTryCloudflareUrl -Paths @($tunnelErrLog, $tunnelOutLog, $tunnelLog)
     if ($tunnelUrl) {
       break
     }
 
-    if (($iteration % 20) -eq 0) {
-      if (-not $tunnelUrl) {
-        Write-Host "[INFO] Esperando URL publica del tunnel..."
-      }
+    if (($sec % 15) -eq 0) {
+      Write-Host "[INFO] Esperando URL publica del tunnel..."
     }
 
-    $tunnelStillRunning = Get-Process -Id $tunnelProc.Id -ErrorAction SilentlyContinue
-    if (-not $tunnelStillRunning) {
-      Write-Warning "El proceso cloudflared termino antes de publicar URL."
-      $tunnelEndedEarly = $true
+    if (-not (Get-Process -Id $tunnelProc.Id -ErrorAction SilentlyContinue)) {
       break
     }
   }
@@ -275,72 +292,51 @@ for ($attempt = 1; $attempt -le $maxAttempts -and -not $tunnelUrl; $attempt++) {
     break
   }
 
-  $attemptTunnelAlive = Get-Process -Id $tunnelProc.Id -ErrorAction SilentlyContinue
-  if ($attemptTunnelAlive) {
-    $tunnelActiveWithoutUrl = $true
-    break
-  }
-
-  if (Test-Path $tunnelErrLog) {
-    $lastErrPreview = (Get-Content -Path $tunnelErrLog -Tail 8 -ErrorAction SilentlyContinue | Out-String).Trim()
-  }
-
-  if ($attempt -lt $maxAttempts) {
-    Start-Sleep -Seconds 2
-  }
-}
-
-if (-not $tunnelUrl) {
-  if (-not $tunnelEndedEarly) {
-    Write-Warning "No se pudo leer la URL publica del tunnel en $timeoutSeconds segundos por intento."
-  }
-  if ($tunnelActiveWithoutUrl) {
-    Set-Content -Path $tunnelUrlFile -Value @(
-      "TUNNEL_URL=PENDING",
-      "VITE_API_URL=$localApiUrl"
-    ) -Encoding ascii
-    Set-Content -Path $clientEnvLocal -Value "VITE_API_URL=$localApiUrl" -Encoding ascii
-    Write-Host "[INFO] El proceso tunnel sigue activo, pero aun no publica URL."
-    Write-Host "[INFO] Revisa logs: $tunnelErrLog | $tunnelOutLog"
-    Write-Host "[INFO] Se dejo VITE_API_URL local temporalmente en client/.env.local"
-    exit 2
-  }
+  $lastErrPreview = Get-LastLogLines -Path $tunnelErrLog -Lines 14
 
   $tunnelAlive = Get-Process -Id $tunnelProc.Id -ErrorAction SilentlyContinue
   if ($tunnelAlive) {
     Stop-Process -Id $tunnelProc.Id -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Milliseconds 500
   }
+}
+
+if (-not $tunnelUrl) {
   Set-Content -Path $clientEnvLocal -Value "VITE_API_URL=$localApiUrl" -Encoding ascii
-  $errPreview = $lastErrPreview
-  if ($errPreview) {
-    Write-Host "[ERROR] Detalle cloudflared:"
-    Write-Host $errPreview
-    if ($errPreview.Contains("[::1]:4000")) {
-      Write-Host "[SUGERENCIA] Se detecto intento a IPv6 (::1:4000). Este script ya usa 127.0.0.1:4000; relanza el inicio."
-    }
-    if ($errPreview.ToLower().Contains("socket no permitido") -or $errPreview.ToLower().Contains("not permitted")) {
+
+  if ($lastErrPreview) {
+    Write-Host "[ERROR] Ultimas lineas cloudflared stderr:"
+    Write-Host $lastErrPreview
+    $errLower = $lastErrPreview.ToLowerInvariant()
+    if ($errLower.Contains("socket no permitido") -or $errLower.Contains("not permitted")) {
       Write-Host "[SUGERENCIA] Parece bloqueo de red/firewall/antivirus/VPN hacia api.trycloudflare.com:443."
-      Write-Host "[SUGERENCIA] Prueba permitir cloudflared.exe en firewall o ejecutar terminal como administrador."
     }
-  } else {
-    Write-Host "[ERROR] No hubo salida de error en cloudflared stderr."
+    if ($errLower.Contains("dial tcp [::1]:4000")) {
+      Write-Host "[SUGERENCIA] Se detecto IPv6 (::1). Este script usa 127.0.0.1 para evitar ese problema."
+    }
   }
-  Write-Host "[ERROR] El tunnel no quedo en ejecucion."
-  Write-Host "[ERROR] Revisa logs: $tunnelErrLog | $tunnelOutLog"
-  Write-Host "[INFO] El backend queda activo en http://localhost:4000 para abrir tunnel manual si lo necesitas."
+
+  Write-Host "[ERROR] No se obtuvo URL publica del tunnel."
+  Write-Host "[INFO] Prueba manual:"
+  Write-Host "cloudflared tunnel --url http://127.0.0.1:4000 --edge-ip-version 4 --no-autoupdate"
+  Write-Host "[INFO] El backend queda corriendo en http://127.0.0.1:4000"
   exit 1
 }
 
 $apiUrl = "$tunnelUrl/api/v1"
-
 Set-Content -Path $tunnelUrlFile -Value @(
   "TUNNEL_URL=$tunnelUrl",
   "VITE_API_URL=$apiUrl"
 ) -Encoding ascii
-
 Set-Content -Path $clientEnvLocal -Value "VITE_API_URL=$apiUrl" -Encoding ascii
+
+try {
+  Set-Clipboard -Value $tunnelUrl -ErrorAction Stop
+  Write-Host "[OK] URL copiada al portapapeles."
+} catch {
+  Write-Host "[INFO] No se pudo copiar URL al portapapeles desde PowerShell."
+}
 
 Write-Host "[OK] URL tunnel: $tunnelUrl"
 Write-Host "[OK] API URL: $apiUrl"
 Write-Host "[OK] Archivo actualizado: client/.env.local"
-Write-Host "[INFO] Si el frontend ya estaba corriendo, reinicialo para aplicar la nueva VITE_API_URL."
