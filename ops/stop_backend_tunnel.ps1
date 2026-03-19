@@ -24,7 +24,7 @@ function Stop-FromPidFile {
     $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
     if ($proc) {
       # Use taskkill /T so child processes (npm/node) also stop.
-      & taskkill /PID $pid /T /F | Out-Null
+      & taskkill /PID $pid /T /F > $null 2>&1
       if ($stopped.Add($pid)) {
         Write-Host "[STOP] $Label PID $pid detenido."
       }
@@ -94,7 +94,8 @@ foreach ($pid in $backendPortPids) {
   if ($stopped.Contains($pid)) {
     continue
   }
-  & taskkill /PID $pid /T /F | Out-Null
+  & taskkill /PID $pid /T /F > $null 2>&1
+  # Ignore access errors for processes owned by other contexts.
   $stopped.Add($pid) | Out-Null
   Write-Host "[STOP] Proceso en puerto 4000 (PID $pid) detenido."
 }

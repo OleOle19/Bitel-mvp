@@ -3,6 +3,8 @@ setlocal EnableDelayedExpansion
 cd /d "%~dp0"
 
 echo [INFO] Iniciando backend + ngrok...
+if not exist ".\tmp" mkdir ".\tmp"
+set "CONSOLE_LOG=.\tmp\start-backend-tunnel.console.log"
 powershell -NoProfile -ExecutionPolicy Bypass -File ".\ops\start_backend_tunnel.ps1"
 set "EXITCODE=%ERRORLEVEL%"
 
@@ -35,6 +37,7 @@ if /I not "%~1"=="--no-pause" (
   if not "%EXITCODE%"=="0" (
     echo [WARN] El inicio termino con codigo %EXITCODE%.
     echo [WARN] Revisa logs en:
+    echo [WARN]   .\tmp\start-backend-tunnel.console.log
     echo [WARN]   .\tmp\server-start.err.log
     echo [WARN]   .\tmp\ngrok-backend.out.log
     echo [WARN]   .\tmp\ngrok-backend.err.log
@@ -47,4 +50,3 @@ if /I not "%~1"=="--no-pause" (
 
 exit /b %EXITCODE%
 endlocal
-
