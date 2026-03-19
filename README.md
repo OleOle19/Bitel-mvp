@@ -52,20 +52,20 @@ Si estas en la raiz:
 npm --prefix server run prisma:deploy
 ```
 
-## Tunnel estable (Named Tunnel recomendado)
-Para evitar fallos intermitentes de `trycloudflare.com`, usa Named Tunnel.
+## Tunnel estable (Ngrok, sin dominio propio)
+Este flujo no requiere dominio propio.
 
-1. En Cloudflare Zero Trust crea un tunnel y copia:
-- `CF_TUNNEL_TOKEN`
-- Hostname publico (ejemplo: `https://api.tudominio.com`)
-2. En este proyecto ejecuta:
-
-```bat
-CONFIGURAR_NAMED_TUNNEL.bat
+1. Instala ngrok:
+```powershell
+winget install Ngrok.Ngrok
 ```
 
-3. Luego inicia:
+2. Copia tu authtoken desde ngrok dashboard y configura:
+```bat
+CONFIGURAR_NGROK.bat
+```
 
+3. Inicia backend + tunnel:
 ```bat
 INICIAR_BACKEND_TUNNEL.bat
 ```
@@ -78,4 +78,3 @@ Archivo real (local, no se sube a Git): `ops/tunnel.env`
 ## Notas
 - El MVP no integra APIs externas de Bitel, pero deja el diseno preparado.
 - La PWA es basica (manifest + estilo), sin service worker.
-

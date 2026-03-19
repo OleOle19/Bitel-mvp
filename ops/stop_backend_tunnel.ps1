@@ -60,6 +60,8 @@ $patterns = @(
   "cloudflared tunnel --url http://localhost:4000",
   "cloudflared tunnel --url http://127.0.0.1:4000",
   "cloudflared tunnel run --token",
+  "ngrok http 127.0.0.1:4000",
+  "ngrok http localhost:4000",
   "npm --prefix server run start:dev",
   "nest start --watch"
 )

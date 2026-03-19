@@ -9,8 +9,8 @@ New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
 
 $backendOutLog = Join-Path $tmpDir "server-start.out.log"
 $backendErrLog = Join-Path $tmpDir "server-start.err.log"
-$tunnelOutLog = Join-Path $tmpDir "cloudflared-backend.out.log"
-$tunnelErrLog = Join-Path $tmpDir "cloudflared-backend.err.log"
+$ngrokOutLog = Join-Path $tmpDir "ngrok-backend.out.log"
+$ngrokErrLog = Join-Path $tmpDir "ngrok-backend.err.log"
 $backendPidFile = Join-Path $tmpDir "backend.pid"
 $tunnelPidFile = Join-Path $tmpDir "tunnel.pid"
 $tunnelUrlFile = Join-Path $tmpDir "tunnel-url.txt"
@@ -105,94 +105,72 @@ function Get-ConfigValue {
   if ($fromEnv) {
     return [string]$fromEnv
   }
-
   if ($Map.ContainsKey($Key)) {
     return [string]$Map[$Key]
   }
-
   return $null
 }
 
-function Normalize-BaseUrl {
-  param([string]$Url)
+function Get-NgrokPublicUrl {
+  param([int]$Port = 4040)
 
-  if (-not $Url) {
-    return $null
-  }
-  $normalized = $Url.Trim()
-  if (-not $normalized) {
-    return $null
-  }
-  if (-not $normalized.StartsWith("http://") -and -not $normalized.StartsWith("https://")) {
-    $normalized = "https://$normalized"
-  }
-  return $normalized.TrimEnd("/")
-}
-
-function Build-ApiUrl {
-  param([string]$BaseUrl)
-
-  $normalized = Normalize-BaseUrl -Url $BaseUrl
-  if (-not $normalized) {
-    return $null
-  }
-  return "$normalized/api/v1"
-}
-
-function Get-LatestTryCloudflareUrl {
-  param(
-    [Parameter(Mandatory = $true)][string[]]$Paths
-  )
-
-  $regex = [regex]"https://[A-Za-z0-9-]+\.trycloudflare\.com"
-  foreach ($path in $Paths) {
-    if (-not (Test-Path $path)) {
-      continue
+  try {
+    $resp = Invoke-RestMethod -Uri ("http://127.0.0.1:{0}/api/tunnels" -f $Port) -TimeoutSec 2 -ErrorAction Stop
+    if (-not $resp -or -not $resp.tunnels) {
+      return $null
     }
-    try {
-      $lines = Get-Content -Path $path -Tail 300 -ErrorAction Stop
-      for ($i = $lines.Count - 1; $i -ge 0; $i--) {
-        $line = [string]$lines[$i]
-        if (-not $line) {
-          continue
-        }
-        $matches = $regex.Matches($line)
-        if ($matches.Count -eq 0) {
-          continue
-        }
-        for ($j = $matches.Count - 1; $j -ge 0; $j--) {
-          $candidate = [string]$matches[$j].Value
-          try {
-            $uri = [System.Uri]$candidate
-            $host = [string]$uri.Host
-            if ($host -and $host.ToLowerInvariant() -ne "api.trycloudflare.com") {
-              return $candidate
-            }
-          } catch {}
-        }
+
+    foreach ($t in $resp.tunnels) {
+      $url = [string]$t.public_url
+      if ($url -and $url.StartsWith("https://")) {
+        return $url.TrimEnd("/")
       }
-    } catch {}
+    }
+
+    return $null
+  } catch {
+    return $null
   }
-  return $null
 }
 
 & (Join-Path $PSScriptRoot "stop_backend_tunnel.ps1") | Out-Null
 
-Remove-Item -Path $backendOutLog, $backendErrLog, $tunnelOutLog, $tunnelErrLog, $backendPidFile, $tunnelPidFile, $tunnelUrlFile -Force -ErrorAction SilentlyContinue
+Remove-Item -Path $backendOutLog, $backendErrLog, $ngrokOutLog, $ngrokErrLog, $backendPidFile, $tunnelPidFile, $tunnelUrlFile -Force -ErrorAction SilentlyContinue
 
-$cloudflaredExe = $null
-$cloudflaredCommand = Get-Command cloudflared -ErrorAction SilentlyContinue
-if ($cloudflaredCommand) {
-  $cloudflaredExe = [string]$cloudflaredCommand.Source
+$ngrokCmd = Get-Command ngrok -ErrorAction SilentlyContinue
+$ngrokExe = $null
+if ($ngrokCmd) {
+  $ngrokExe = [string]$ngrokCmd.Source
 }
-if (-not $cloudflaredExe) {
-  $localCloudflared = Join-Path $root "tools/cloudflared.exe"
-  if (Test-Path $localCloudflared) {
-    $cloudflaredExe = $localCloudflared
+if (-not $ngrokExe) {
+  $wingetNgrok = Get-ChildItem -Path "$env:LOCALAPPDATA\Microsoft\WinGet\Packages" -Filter "ngrok.exe" -Recurse -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -like "*Ngrok.Ngrok*" } |
+    Select-Object -First 1
+  if ($wingetNgrok) {
+    $ngrokExe = [string]$wingetNgrok.FullName
   }
 }
-if (-not $cloudflaredExe) {
-  throw "No se encontro cloudflared. Instala cloudflared y agrega su ruta al PATH."
+if (-not $ngrokExe) {
+  Write-Host "[ERROR] No se encontro ngrok en PATH."
+  Write-Host "[SUGERENCIA] Instala ngrok con: winget install Ngrok.Ngrok"
+  exit 1
+}
+
+$configMap = Load-KeyValueFile -Path $tunnelEnvFile
+$ngrokAuthToken = Get-ConfigValue -Map $configMap -Key "NGROK_AUTHTOKEN"
+$ngrokDomain = Get-ConfigValue -Map $configMap -Key "NGROK_DOMAIN"
+$ngrokApiPortRaw = Get-ConfigValue -Map $configMap -Key "NGROK_API_PORT"
+$ngrokApiPort = 4040
+if ($ngrokApiPortRaw) {
+  $parsed = 0
+  if ([int]::TryParse([string]$ngrokApiPortRaw, [ref]$parsed) -and $parsed -gt 0) {
+    $ngrokApiPort = $parsed
+  }
+}
+
+if ($ngrokAuthToken) {
+  Write-Host "[INFO] Configurando authtoken de ngrok..."
+  & $ngrokExe config add-authtoken $ngrokAuthToken | Out-Null
 }
 
 Write-Host "[START] Iniciando backend..."
@@ -218,143 +196,68 @@ if (-not $backendReady) {
     Write-Host "[ERROR] Ultimas lineas backend stderr:"
     Write-Host $backendErrPreview
   }
-  throw "Backend no quedo listo en http://127.0.0.1:4000. Revisa logs: $backendOutLog | $backendErrLog"
+  Write-Host "[ERROR] Backend no quedo listo en http://127.0.0.1:4000."
+  Write-Host "[ERROR] Revisa logs: $backendOutLog | $backendErrLog"
+  exit 1
 }
 
 Write-Host "[OK] Backend listo. PID: $($backendProc.Id)"
 
-$configMap = Load-KeyValueFile -Path $tunnelEnvFile
-$modeRaw = Get-ConfigValue -Map $configMap -Key "CF_TUNNEL_MODE"
-if (-not $modeRaw) {
-  $modeRaw = "quick"
-}
-$tunnelMode = $modeRaw.Trim().ToLowerInvariant()
-
-$namedToken = Get-ConfigValue -Map $configMap -Key "CF_TUNNEL_TOKEN"
-$publicUrlRaw = Get-ConfigValue -Map $configMap -Key "CF_TUNNEL_PUBLIC_URL"
-$publicUrl = Normalize-BaseUrl -Url $publicUrlRaw
-
 $localApiUrl = "http://127.0.0.1:4000/api/v1"
-$resolvedTunnelUrl = $null
-$resolvedApiUrl = $localApiUrl
-
 Set-Content -Path $clientEnvLocal -Value "VITE_API_URL=$localApiUrl" -Encoding ascii
 Remove-Item -Path $tunnelUrlFile -Force -ErrorAction SilentlyContinue
 
-$namedRequested = $false
-if ($tunnelMode -eq "named") {
-  $namedRequested = $true
-}
-if ($namedToken) {
-  $namedRequested = $true
+$ngrokArgs = @("http", "127.0.0.1:4000", "--log", "stdout", "--log-format", "logfmt", "--log-level", "info", "--web-addr", "127.0.0.1:$ngrokApiPort")
+if ($ngrokDomain) {
+  $ngrokArgs += @("--domain", $ngrokDomain)
 }
 
-if ($namedRequested) {
-  if (-not $namedToken) {
-    throw "Modo named activado pero falta CF_TUNNEL_TOKEN. Crea ops/tunnel.env usando ops/tunnel.env.example."
-  }
-  if (-not $publicUrl) {
-    throw "Modo named activado pero falta CF_TUNNEL_PUBLIC_URL. Crea ops/tunnel.env usando ops/tunnel.env.example."
-  }
+Write-Host "[START] Iniciando ngrok..."
+$tunnelProc = Start-Process -FilePath $ngrokExe -ArgumentList $ngrokArgs -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $ngrokOutLog -RedirectStandardError $ngrokErrLog -PassThru
+Set-Content -Path $tunnelPidFile -Value $tunnelProc.Id -Encoding ascii
+Write-Host "[START] Ngrok iniciado. PID: $($tunnelProc.Id)"
 
-  Write-Host "[START] Iniciando named tunnel..."
-  $tunnelProc = Start-Process -FilePath $cloudflaredExe -ArgumentList @("tunnel", "run", "--token", $namedToken) -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $tunnelOutLog -RedirectStandardError $tunnelErrLog -PassThru
-  Set-Content -Path $tunnelPidFile -Value $tunnelProc.Id -Encoding ascii
-  Write-Host "[START] Tunnel iniciado. PID: $($tunnelProc.Id)"
+$resolvedTunnelUrl = $null
+for ($sec = 1; $sec -le 45; $sec++) {
+  Start-Sleep -Seconds 1
 
-  $stable = $false
-  for ($sec = 1; $sec -le 20; $sec++) {
-    Start-Sleep -Seconds 1
-    if (-not (Get-Process -Id $tunnelProc.Id -ErrorAction SilentlyContinue)) {
-      break
-    }
-    if ($sec -ge 6) {
-      $stable = $true
-      break
-    }
+  $resolvedTunnelUrl = Get-NgrokPublicUrl -Port $ngrokApiPort
+  if ($resolvedTunnelUrl) {
+    break
   }
 
-  if (-not $stable) {
-    $errPreview = Get-LastLogLines -Path $tunnelErrLog -Lines 18
-    if ($errPreview) {
-      Write-Host "[ERROR] Ultimas lineas cloudflared stderr:"
-      Write-Host $errPreview
-    }
-    throw "Named tunnel no se mantuvo activo. Revisa token/hostname y logs: $tunnelErrLog"
+  if (($sec % 10) -eq 0) {
+    Write-Host "[INFO] Esperando URL publica de ngrok..."
   }
 
-  $resolvedTunnelUrl = $publicUrl
-  $resolvedApiUrl = Build-ApiUrl -BaseUrl $resolvedTunnelUrl
-} else {
-  Write-Host "[INFO] Modo quick tunnel activo (fallback)."
-
-  $attemptProfiles = @(
-    @("tunnel", "--url", "http://127.0.0.1:4000", "--edge-ip-version", "4", "--protocol", "http2", "--no-autoupdate"),
-    @("tunnel", "--url", "http://127.0.0.1:4000", "--edge-ip-version", "4", "--no-autoupdate")
-  )
-
-  $maxSecondsPerAttempt = 75
-  $lastErrPreview = ""
-
-  for ($attempt = 1; $attempt -le $attemptProfiles.Count -and -not $resolvedTunnelUrl; $attempt++) {
-    if ($attempt -gt 1) {
-      Write-Host "[RETRY] Reintentando tunnel ($attempt/$($attemptProfiles.Count))..."
-    }
-
-    Remove-Item -Path $tunnelOutLog, $tunnelErrLog -Force -ErrorAction SilentlyContinue
-
-    $tunnelArgs = $attemptProfiles[$attempt - 1]
-    $tunnelProc = Start-Process -FilePath $cloudflaredExe -ArgumentList $tunnelArgs -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $tunnelOutLog -RedirectStandardError $tunnelErrLog -PassThru
-    Set-Content -Path $tunnelPidFile -Value $tunnelProc.Id -Encoding ascii
-    Write-Host "[START] Tunnel iniciado. PID: $($tunnelProc.Id)"
-
-    for ($sec = 1; $sec -le $maxSecondsPerAttempt; $sec++) {
-      Start-Sleep -Seconds 1
-
-      $foundUrl = Get-LatestTryCloudflareUrl -Paths @($tunnelErrLog, $tunnelOutLog)
-      if ($foundUrl) {
-        $resolvedTunnelUrl = $foundUrl
-        break
-      }
-
-      if (($sec % 15) -eq 0) {
-        Write-Host "[INFO] Esperando URL publica del tunnel..."
-      }
-
-      if (-not (Get-Process -Id $tunnelProc.Id -ErrorAction SilentlyContinue)) {
-        break
-      }
-    }
-
-    if ($resolvedTunnelUrl) {
-      break
-    }
-
-    $lastErrPreview = Get-LastLogLines -Path $tunnelErrLog -Lines 18
-    $tunnelAlive = Get-Process -Id $tunnelProc.Id -ErrorAction SilentlyContinue
-    if ($tunnelAlive) {
-      Stop-Process -Id $tunnelProc.Id -Force -ErrorAction SilentlyContinue
-      Start-Sleep -Milliseconds 500
-    }
+  if (-not (Get-Process -Id $tunnelProc.Id -ErrorAction SilentlyContinue)) {
+    break
   }
-
-  if (-not $resolvedTunnelUrl) {
-    if ($lastErrPreview) {
-      Write-Host "[ERROR] Ultimas lineas cloudflared stderr:"
-      Write-Host $lastErrPreview
-    }
-    Write-Host "[ERROR] No se obtuvo URL publica del quick tunnel."
-    Write-Host "[SUGERENCIA] Configura named tunnel en ops/tunnel.env para evitar este problema."
-    exit 1
-  }
-
-  $resolvedApiUrl = Build-ApiUrl -BaseUrl $resolvedTunnelUrl
 }
+
+if (-not $resolvedTunnelUrl) {
+  $errPreview = Get-LastLogLines -Path $ngrokErrLog -Lines 20
+  if ($errPreview) {
+    Write-Host "[ERROR] Ultimas lineas ngrok stderr:"
+    Write-Host $errPreview
+  } else {
+    $outPreview = Get-LastLogLines -Path $ngrokOutLog -Lines 20
+    if ($outPreview) {
+      Write-Host "[ERROR] Ultimas lineas ngrok log:"
+      Write-Host $outPreview
+    }
+  }
+  Write-Host "[ERROR] No se obtuvo URL publica de ngrok."
+  Write-Host "[SUGERENCIA] Si es tu primera vez, configura token: ngrok config add-authtoken <TOKEN>"
+  exit 1
+}
+
+$resolvedApiUrl = "$resolvedTunnelUrl/api/v1"
 
 Set-Content -Path $tunnelUrlFile -Value @(
+  "TUNNEL_PROVIDER=ngrok",
   "TUNNEL_URL=$resolvedTunnelUrl",
-  "VITE_API_URL=$resolvedApiUrl",
-  "MODE=$tunnelMode"
+  "VITE_API_URL=$resolvedApiUrl"
 ) -Encoding ascii
 Set-Content -Path $clientEnvLocal -Value "VITE_API_URL=$resolvedApiUrl" -Encoding ascii
 
