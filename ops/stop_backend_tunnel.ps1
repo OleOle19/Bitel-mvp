@@ -59,6 +59,7 @@ Stop-FromPidFile -PidFile $tunnelPidFile -Label "Tunnel"
 $patterns = @(
   "cloudflared tunnel --url http://localhost:4000",
   "cloudflared tunnel --url http://127.0.0.1:4000",
+  "cloudflared tunnel run --token",
   "npm --prefix server run start:dev",
   "nest start --watch"
 )
