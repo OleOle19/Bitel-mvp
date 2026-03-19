@@ -133,26 +133,80 @@ function Get-NgrokPublicUrl {
   }
 }
 
+function Test-NgrokExecutable {
+  param(
+    [Parameter(Mandatory = $true)][string]$ExePath
+  )
+
+  if (-not (Test-Path $ExePath)) {
+    return $false
+  }
+
+  try {
+    & $ExePath version | Out-Null
+    return $true
+  } catch {
+    return $false
+  }
+}
+
 & (Join-Path $PSScriptRoot "stop_backend_tunnel.ps1") | Out-Null
 
 Remove-Item -Path $backendOutLog, $backendErrLog, $ngrokOutLog, $ngrokErrLog, $backendPidFile, $tunnelPidFile, $tunnelUrlFile -Force -ErrorAction SilentlyContinue
 
 $ngrokCmd = Get-Command ngrok -ErrorAction SilentlyContinue
 $ngrokExe = $null
-if ($ngrokCmd) {
-  $ngrokExe = [string]$ngrokCmd.Source
+
+$candidateSet = New-Object "System.Collections.Generic.HashSet[string]"
+$candidates = New-Object System.Collections.Generic.List[string]
+
+if ($ngrokCmd -and $ngrokCmd.Source) {
+  $source = [string]$ngrokCmd.Source
+  if ($candidateSet.Add($source)) { $candidates.Add($source) | Out-Null }
 }
-if (-not $ngrokExe) {
-  $wingetNgrok = Get-ChildItem -Path "$env:LOCALAPPDATA\Microsoft\WinGet\Packages" -Filter "ngrok.exe" -Recurse -ErrorAction SilentlyContinue |
-    Where-Object { $_.FullName -like "*Ngrok.Ngrok*" } |
-    Select-Object -First 1
-  if ($wingetNgrok) {
-    $ngrokExe = [string]$wingetNgrok.FullName
+
+$wingetLink = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Links\ngrok.exe"
+if ($candidateSet.Add($wingetLink)) { $candidates.Add($wingetLink) | Out-Null }
+
+$windowsAppsAlias = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps\ngrok.exe"
+if ($candidateSet.Add($windowsAppsAlias)) { $candidates.Add($windowsAppsAlias) | Out-Null }
+
+$wingetPackageBins = Get-ChildItem -Path "$env:LOCALAPPDATA\Microsoft\WinGet\Packages" -Filter "ngrok.exe" -Recurse -ErrorAction SilentlyContinue |
+  Where-Object { $_.FullName -like "*Ngrok.Ngrok*" } |
+  Sort-Object LastWriteTime -Descending
+foreach ($item in $wingetPackageBins) {
+  $full = [string]$item.FullName
+  if ($candidateSet.Add($full)) {
+    $candidates.Add($full) | Out-Null
   }
 }
+
+foreach ($candidate in $candidates) {
+  if (-not (Test-Path $candidate -PathType Leaf)) {
+    continue
+  }
+
+  if (Test-NgrokExecutable -ExePath $candidate) {
+    $ngrokExe = $candidate
+    break
+  }
+
+  $localFallback = Join-Path $tmpDir "ngrok-runtime.exe"
+  try {
+    Copy-Item -Path $candidate -Destination $localFallback -Force -ErrorAction Stop
+    if (Test-NgrokExecutable -ExePath $localFallback) {
+      $ngrokExe = $localFallback
+      break
+    }
+  } catch {}
+}
+
 if (-not $ngrokExe) {
-  Write-Host "[ERROR] No se encontro ngrok en PATH."
-  Write-Host "[SUGERENCIA] Instala ngrok con: winget install Ngrok.Ngrok"
+  Write-Host "[ERROR] No se pudo ejecutar ngrok desde las rutas detectadas."
+  Write-Host "[SUGERENCIA] Abre CMD/PowerShell normal (no administrador) y prueba: ngrok version"
+  Write-Host "[SUGERENCIA] Si sigue fallando, reinstala con: winget uninstall Ngrok.Ngrok && winget install Ngrok.Ngrok"
+  Write-Host "[SUGERENCIA] Si usas siempre terminal administrador, instala en scope machine:"
+  Write-Host "             winget install --id Ngrok.Ngrok -e --scope machine --accept-source-agreements --accept-package-agreements"
   exit 1
 }
 
@@ -170,7 +224,12 @@ if ($ngrokApiPortRaw) {
 
 if ($ngrokAuthToken) {
   Write-Host "[INFO] Configurando authtoken de ngrok..."
-  & $ngrokExe config add-authtoken $ngrokAuthToken | Out-Null
+  try {
+    & $ngrokExe config add-authtoken $ngrokAuthToken | Out-Null
+  } catch {
+    Write-Host "[WARN] No se pudo aplicar authtoken automaticamente."
+    Write-Host "[SUGERENCIA] Ejecuta manual: ngrok config add-authtoken <TU_TOKEN>"
+  }
 }
 
 Write-Host "[START] Iniciando backend..."
@@ -213,7 +272,14 @@ if ($ngrokDomain) {
 }
 
 Write-Host "[START] Iniciando ngrok..."
-$tunnelProc = Start-Process -FilePath $ngrokExe -ArgumentList $ngrokArgs -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $ngrokOutLog -RedirectStandardError $ngrokErrLog -PassThru
+$tunnelProc = $null
+try {
+  $tunnelProc = Start-Process -FilePath $ngrokExe -ArgumentList $ngrokArgs -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $ngrokOutLog -RedirectStandardError $ngrokErrLog -PassThru
+} catch {
+  Write-Host "[ERROR] No se pudo iniciar ngrok: $($_.Exception.Message)"
+  Write-Host "[SUGERENCIA] Cierra terminales viejas, abre una nueva como usuario normal y reintenta."
+  exit 1
+}
 Set-Content -Path $tunnelPidFile -Value $tunnelProc.Id -Encoding ascii
 Write-Host "[START] Ngrok iniciado. PID: $($tunnelProc.Id)"
 
